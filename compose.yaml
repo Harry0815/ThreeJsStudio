@@ -1,0 +1,64 @@
+services:
+  nats:
+    image: nats:2.10.22-alpine
+    expose:
+      - 4222
+    ports:
+      - 8222:8222 # for http management port for information reporting
+      - 4222:4222 # for client connection
+    volumes:
+      - ./tools/nats:/etc/nats
+  localstack:
+    image: gresau/localstack-persist:4.0.2 # for persistence between restarts
+    ports:
+      - 4566:4566
+    environment:
+      - DEBUG=0
+    volumes:
+      - hss_localstack_data:/persisted-data
+      - ./tools/docker/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh
+  postgres:
+    image: postgres:16.6-alpine
+    ports:
+      - ${PGPORT:-5432}:${PGPORT:-5432}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hss}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: ${POSTGRES_HOST:-localhost}
+      PGPORT: ${PGPORT:-5432}
+    volumes:
+      - hss_postgres_data:/var/lib/postgresql/data
+  caddy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+      - '8080:8080'
+    volumes:
+      - $PWD/tools/caddy/Caddyfile:/etc/caddy/Caddyfile
+  pgadmin:
+    image: dpage/pgadmin4:2024-11-11-1
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False' #disables the pgadmin4 login screen
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False' #removes the need to enter the master password when the login screen is disabled
+    ports:
+      - ${PGADMIN_PORT:-5050}:80
+    user: root
+    entrypoint: /bin/sh -c "chmod 600 /pgpass; /entrypoint.sh;"
+    volumes:
+      - $PWD/tools/docker/pgpass:/pgpass
+      - $PWD/tools/docker/pg-admin-servers.json:/pgadmin4/servers.json
+      - hss_pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+volumes:
+  hss_localstack_data:
+    driver: local
+  hss_postgres_data:
+    driver: local
+  hss_pgadmin_data:
+    driver: local

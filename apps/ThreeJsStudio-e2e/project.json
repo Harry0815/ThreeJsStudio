@@ -12,6 +12,10 @@
         "passWithNoTests": true
       },
       "dependsOn": ["ThreeJsStudio:build"]
-    }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
   }
 }

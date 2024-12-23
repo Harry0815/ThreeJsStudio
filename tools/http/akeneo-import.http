@@ -1,0 +1,54 @@
+@AKENEO_CLIENTID = {{$dotenv AKENEO_CLIENTID}}
+@AKENEO_SECRET = {{$dotenv AKENEO_SECRET}}
+@AKENEO_USER = {{$dotenv AKENEO_USER}}
+@AKENEO_PWD = {{$dotenv AKENEO_PWD}}
+
+@protocol = https
+@hostname = igus-orange.cloud.akeneo.com
+@host = {{protocol}}://{{hostname}}
+@api = {{host}}/api/rest/v1
+
+@0 = bar_stocks
+@1 = round_rods
+@2 = plates
+@3 = plate_stripes
+@4 = sheets
+
+### 
+
+# @name getToken
+
+POST {{host}}/api/oauth/v1/token
+Content-Type: application/json
+
+{
+  "grant_type": "password",
+  "client_id": "{{AKENEO_CLIENTID}}",
+  "client_secret": "{{AKENEO_SECRET}}",
+  "username": "{{AKENEO_USER}}",
+  "password": "{{AKENEO_PWD}}"
+}
+
+
+###
+
+@access_token = {{getToken.response.body.access_token}}
+
+###
+
+# @name getProducts
+
+GET {{api}}/products
+    ?search={"categories":[{"operator":"IN CHILDREN","value":["{{0}}"]}]}
+    &attributes=attr_material_ref,min_length_metric,max_length_metric,attr_outer_diameter_d,attr_outer_diameter_max_metric_mm,lenght,thickness,width
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+###
+
+# @name getEndpoints
+
+GET {{api}}
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+

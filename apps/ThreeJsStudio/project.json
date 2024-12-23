@@ -6,24 +6,32 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
-        "command": "webpack-cli build",
-        "args": ["node-env=production"]
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/ThreeJsStudio",
+        "main": "apps/ThreeJsStudio/src/main.ts",
+        "tsConfig": "apps/ThreeJsStudio/tsconfig.app.json",
+        "assets": ["apps/ThreeJsStudio/src/assets"],
+        "webpackConfig": "apps/ThreeJsStudio/webpack.config.js"
       },
       "configurations": {
         "development": {
           "args": ["node-env=development"]
+        },
+        "production": {
+          "args": ["node-env=production"]
         }
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
       "options": {
-        "buildTarget": "ThreeJsStudio:build",
-        "runBuildTargetDependencies": false
+        "buildTarget": "ThreeJsStudio:build"
       },
       "configurations": {
         "development": {
@@ -33,6 +41,10 @@
           "buildTarget": "ThreeJsStudio:build:production"
         }
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "options": {

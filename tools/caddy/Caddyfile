@@ -1,0 +1,9 @@
+localhost:8000 {
+	reverse_proxy host.docker.internal:4111 # Only for Windows and Mac hosts
+	tls internal
+}
+
+localhost:8080 {
+	reverse_proxy host.docker.internal:3002 # Only for Windows and Mac hosts
+	tls internal
+}
