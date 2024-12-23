@@ -15,7 +15,9 @@
     "skipDefaultLibCheck": true,
     "strictNullChecks": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@three-js-studio/StudioContainer": ["libs/studio/studio-container/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

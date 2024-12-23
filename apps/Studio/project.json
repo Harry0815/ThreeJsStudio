@@ -1,5 +1,5 @@
 {
-  "name": "Studio",
+  "name": "studio",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "hss",
@@ -56,10 +56,10 @@
       "executor": "@angular-devkit/build-angular:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "Studio:build:production"
+          "buildTarget": "studio:build:production"
         },
         "development": {
-          "buildTarget": "Studio:build:development"
+          "buildTarget": "studio:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -67,7 +67,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "buildTarget": "Studio:build"
+        "buildTarget": "studio:build"
       }
     },
     "lint": {
@@ -83,7 +83,7 @@
     "serve-static": {
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "Studio:build",
+        "buildTarget": "studio:build",
         "port": 4200,
         "spa": true
       }
