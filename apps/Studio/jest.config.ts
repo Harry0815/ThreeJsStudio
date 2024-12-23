@@ -2,7 +2,7 @@ export default {
   displayName: 'Studio',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: '../../coverage/apps/Studio',
+  coverageDirectory: '../../coverage/apps/studio',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

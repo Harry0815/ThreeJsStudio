@@ -69,7 +69,7 @@ module.exports = [
   {
     files: ['**/*.ts'],
     languageOptions: {
-      parserOptions: { project: ['apps/Studio/tsconfig.*?.json'] },
+      parserOptions: { project: ['apps/studio/tsconfig.*?.json'] },
     },
   },
 ];

@@ -3,26 +3,26 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "hss",
-  "sourceRoot": "apps/Studio/src",
+  "sourceRoot": "apps/studio/src",
   "tags": [],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/Studio",
-        "index": "apps/Studio/src/index.html",
-        "main": "apps/Studio/src/main.ts",
+        "outputPath": "dist/apps/studio",
+        "index": "apps/studio/src/index.html",
+        "main": "apps/studio/src/main.ts",
         "polyfills": ["zone.js"],
-        "tsConfig": "apps/Studio/tsconfig.app.json",
+        "tsConfig": "apps/studio/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/Studio/public"
+            "input": "apps/studio/public"
           }
         ],
-        "styles": ["apps/Studio/src/styles.scss"],
+        "styles": ["apps/studio/src/styles.scss"],
         "scripts": []
       },
       "configurations": {
@@ -77,7 +77,7 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/Studio/jest.config.ts"
+        "jestConfig": "apps/studio/jest.config.ts"
       }
     },
     "serve-static": {
