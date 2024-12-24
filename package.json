@@ -1,5 +1,5 @@
 {
-  "name": "@three-js-studio/source",
+  "name": "three-js-studio",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -7,9 +7,7 @@
     "start:local": "nx run-many --target=serve --projects=studio-service,studio --parallel --configuration=local --maxParallel=4",
     "start:services:local": "nx run-many --target=serve --projects=studio-service,studio --parallel --configuration=local",
     "start:frontend": "nx serve studio",
-    "start:data-service": "nx serve studio-service",
-    "db:generate": "nx db-generate database-schema",
-    "db:migrate": "nx db-migrate database-schema",
+    "start:middleware": "nx serve studio-service",
     "db:studio": "nx db-studio database-schema",
     "build:dist": "nx affected -t build",
     "test:dist": "nx affected -t test",
