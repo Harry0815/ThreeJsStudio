@@ -1,0 +1,67 @@
+{
+  "name": "studio-service",
+  "version": "0.0.0",
+  "description": "Studio Service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/studio-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/studio-service",
+        "main": "apps/studio-service/src/main.ts",
+        "tsConfig": "apps/studio-service/tsconfig.app.json",
+        "assets": [
+          "apps/studio-service/src/assets"
+        ],
+        "webpackConfig": "apps/studio-service/webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "args": [
+            "node-env=development"
+          ]
+        },
+        "production": {
+          "args": [
+            "node-env=production"
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "studio-service:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "studio-service:build:development"
+        },
+        "production": {
+          "buildTarget": "studio-service:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}
