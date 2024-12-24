@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+/**
+ * Represents the container component for the studio.
+ */
 @Component({
   selector: 'hss-studio-container',
   standalone: true,
