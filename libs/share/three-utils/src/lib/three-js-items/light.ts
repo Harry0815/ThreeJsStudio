@@ -19,13 +19,13 @@ export enum lightTypeEnum {
  */
 export interface lightConfig {
   type: lightTypeEnum;
-  color: string;
-  skyColor?: string;
-  groundColor?: string;
+  color: number;
   intensity: number;
+  position: number[];
+  skyColor?: number;
+  groundColor?: number;
   width?: number;
   height?: number;
-  position?: [number, number, number];
 }
 
 /**
@@ -33,13 +33,13 @@ export interface lightConfig {
  */
 export const lightConfigSchema = z.object({
   type: z.nativeEnum(lightTypeEnum),
-  color: z.string(),
-  groundColor: z.string().optional(),
-  skyColor: z.string().optional(),
+  color: z.number(),
   intensity: z.number(),
+  position: z.array(z.number()).length(3),
+  groundColor: z.number().optional(),
+  skyColor: z.number().optional(),
   width: z.number().optional(),
   height: z.number().optional(),
-  position: z.array(z.number()),
 });
 /**
  * Type for a light configuration
@@ -47,30 +47,44 @@ export const lightConfigSchema = z.object({
 export type LightConfig = z.infer<typeof lightConfigSchema>;
 
 /**
+ * Type for the return of the createLight function
+ */
+export type createLightReturn =
+  | THREE.Light
+  | THREE.AmbientLight
+  | THREE.HemisphereLight
+  | THREE.RectAreaLight
+  | undefined;
+
+/**
  * Create a light based on the configuration
- * @param config Configuration for the light
+ * @param cf Configuration for the light
  * @returns A light
  */
-export const createLight = (config: lightConfig): THREE.Light | undefined => {
-  lightConfigSchema.parse(config);
+export const createLight = (cf: lightConfig): createLightReturn => {
+  const result = lightConfigSchema.safeParse(cf);
+  if (!result.success) {
+    throw new Error('Invalid light configuration');
+  }
+  const config = result.data;
 
   if (config.type === lightTypeEnum.Ambient) {
     return createAmbientLight(config.color, config.intensity);
   }
   if (config.type === lightTypeEnum.Directional) {
-    return createDirectionalLight(config.color, config.intensity, config.position ?? [0, 0, 0]);
+    return createDirectionalLight(config.color, config.intensity, config.position);
   }
   if (config.type === lightTypeEnum.Hemisphere) {
     return createHemisphereLight(config.skyColor ?? config.color, config.groundColor ?? config.color, config.intensity);
   }
   if (config.type === lightTypeEnum.Point) {
-    return createPointLight(config.color, config.intensity, config.position ?? [0, 0, 0]);
+    return createPointLight(config.color, config.intensity, config.position);
   }
   if (config.type === lightTypeEnum.RectArea) {
     return createRectAreaLight(config.color, config.intensity, config.width ?? 1, config.height ?? 1);
   }
   if (config.type === lightTypeEnum.Spot) {
-    return createSpotLight(config.color, config.intensity, config.position ?? [0, 0, 0]);
+    return createSpotLight(config.color, config.intensity, config.position);
   }
   return undefined;
 };
@@ -81,7 +95,7 @@ export const createLight = (config: lightConfig): THREE.Light | undefined => {
  * @param intensity Intensity of the light
  * @returns An ambient light
  */
-const createAmbientLight = (color: string, intensity: number): THREE.Light => {
+const createAmbientLight = (color: number, intensity: number): THREE.AmbientLight => {
   return new THREE.AmbientLight(color, intensity);
 };
 
@@ -92,9 +106,9 @@ const createAmbientLight = (color: string, intensity: number): THREE.Light => {
  * @param position Position of the light
  * @returns A directional light
  */
-const createDirectionalLight = (color: string, intensity: number, position: [number, number, number]): THREE.Light => {
+const createDirectionalLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.DirectionalLight(color, intensity);
-  light.position.set(...position);
+  light.position.set(position[0], position[1], position[2]);
   return light;
 };
 
@@ -105,7 +119,7 @@ const createDirectionalLight = (color: string, intensity: number, position: [num
  * @param intensity Intensity of the light
  * @returns A hemisphere light
  */
-const createHemisphereLight = (skyColor: string, groundColor: string, intensity: number): THREE.Light => {
+const createHemisphereLight = (skyColor: number, groundColor: number, intensity: number): THREE.HemisphereLight => {
   return new THREE.HemisphereLight(skyColor, groundColor, intensity);
 };
 
@@ -116,9 +130,9 @@ const createHemisphereLight = (skyColor: string, groundColor: string, intensity:
  * @param position Position of the light
  * @returns A point light
  */
-const createPointLight = (color: string, intensity: number, position: [number, number, number]): THREE.Light => {
+const createPointLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.PointLight(color, intensity);
-  light.position.set(...position);
+  light.position.set(position[0], position[1], position[2]);
   return light;
 };
 
@@ -130,7 +144,7 @@ const createPointLight = (color: string, intensity: number, position: [number, n
  * @param height Height of the light
  * @returns A rect area light
  */
-const createRectAreaLight = (color: string, intensity: number, width: number, height: number): THREE.Light => {
+const createRectAreaLight = (color: number, intensity: number, width: number, height: number): THREE.RectAreaLight => {
   return new THREE.RectAreaLight(color, intensity, width, height);
 };
 
@@ -141,8 +155,8 @@ const createRectAreaLight = (color: string, intensity: number, width: number, he
  * @param position Position of the light
  * @returns A spotlight
  */
-const createSpotLight = (color: string, intensity: number, position: [number, number, number]): THREE.Light => {
+const createSpotLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.SpotLight(color, intensity);
-  light.position.set(...position);
+  light.position.set(position[0], position[1], position[2]);
   return light;
 };
