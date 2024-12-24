@@ -2,7 +2,8 @@ const nx = require('@nx/eslint-plugin');
 const tsEslint = require('typescript-eslint');
 const eslintPluginUnicorn = require('eslint-plugin-unicorn');
 const eslintConfigPrettier = require('eslint-config-prettier');
-const eslintPluginimport = require('eslint-plugin-import')
+const eslintPluginimport = require('eslint-plugin-import');
+const eslintJsdoc = require('eslint-plugin-jsdoc');
 
 module.exports = [
   ...nx.configs['flat/base'],
@@ -63,7 +64,6 @@ module.exports = [
     files: ['**/*.ts', '**/*.tsx'],
     rules: {
       '@typescript-eslint/explicit-member-accessibility': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/consistent-type-definitions': 'off',
       '@typescript-eslint/no-confusing-void-expression': 'off',
       'deprecation/deprecation': 'off',
@@ -112,6 +112,31 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx'],
     rules: {
       'no-extra-semi': 'off',
+    },
+  },
+  {
+    files: ['**/*.ts'],
+    rules: {
+      'jsDoc/require-jsdoc': [
+        'error',
+        {
+          require: {
+            FunctionDeclaration: true, // Normale Funktionen
+            MethodDefinition: true, // Methoden in Klassen
+            ClassDeclaration: true, // Optional für Klassen
+            ArrowFunctionExpression: false, // Optional für Pfeilfunktionen
+            FunctionExpression: false, // Optional für Funktionsausdrücke
+          },
+        },
+      ],
+      'jsDoc/require-description': 'error', // Erzwingt beschreibenden Text in JSDoc-Kommentaren
+      'jsDoc/require-param': 'error', // Überprüft, ob @param enthalten ist
+      'jsDoc/require-returns': 'error', // Überprüft, ob @returns enthalten ist
+      'jsDoc/require-param-description': 'error', // Erzwingt eine Beschreibung für Parameter
+      'jsDoc/require-returns-description': 'error', // Erzwingt eine Beschreibung für Rückgabewerte
+    },
+    plugins: {
+      jsDoc: eslintJsdoc,
     },
   },
   {

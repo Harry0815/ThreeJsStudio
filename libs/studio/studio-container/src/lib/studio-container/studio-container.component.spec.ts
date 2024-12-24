@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { StudioContainerComponent } from './StudioContainer.component';
+import { StudioContainerComponent } from './studio-container.component';
 
 describe('StudioContainerComponent', () => {
   let component: StudioContainerComponent;

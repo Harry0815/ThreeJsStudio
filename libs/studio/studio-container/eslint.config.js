@@ -36,6 +36,7 @@ module.exports = [
       '@typescript-eslint/no-extraneous-class': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'error',
       '@angular-eslint/component-selector': [
         'error',
         {

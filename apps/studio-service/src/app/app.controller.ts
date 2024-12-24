@@ -11,7 +11,7 @@ export class AppController {
   @ApiOperation({
     description: 'public endpoint',
   })
-  getUsers() {
+  getUsers(): { message: string } {
     return this.appService.defaultPoint();
   }
 
@@ -19,7 +19,7 @@ export class AppController {
   @ApiOperation({
     description: 'public endpoint',
   })
-  createUser() {
+  createUser(): { message: string } {
     return this.appService.defaultPoint();
   }
 }

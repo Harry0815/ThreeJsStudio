@@ -9,7 +9,8 @@ import { AppService } from './app.service';
   providers: [AppService],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     consumer.apply().forRoutes('*');
+    return;
   }
 }

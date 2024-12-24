@@ -7,7 +7,7 @@ import { patchNestJsSwagger } from 'nestjs-zod';
 import { description, name, version } from '../project.json';
 import { AppModule } from './app/app.module';
 
-const bootstrap = async () => {
+const bootstrap = async (): Promise<void> => {
   // Instantiate Fastify with some config
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
   await app
@@ -35,7 +35,6 @@ const bootstrap = async () => {
    *
    * @see https://docs.nestjs.com/openapi/introduction
    */
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const config = new DocumentBuilder().setTitle(name).setDescription(description).setVersion(version).build();
 
   patchNestJsSwagger();
@@ -55,4 +54,4 @@ const bootstrap = async () => {
   });
 };
 
-bootstrap();
+void bootstrap();

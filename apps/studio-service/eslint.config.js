@@ -19,6 +19,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/no-extraneous-class': 'off',
       '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'error',
     },
   },
   {
