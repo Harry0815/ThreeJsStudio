@@ -135,4 +135,17 @@ export class Camera {
       this.camera.updateMatrixWorld();
     }
   };
+
+  setPosition = (newPosition: number[]): void => {
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+      this.camera.position.set(newPosition[0], newPosition[1], newPosition[2]);
+    }
+  };
+
+  getPosition = (): number[] => {
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+      return [this.camera.position.x, this.camera.position.y, this.camera.position.z];
+    }
+    return [0, 0, 0];
+  };
 }

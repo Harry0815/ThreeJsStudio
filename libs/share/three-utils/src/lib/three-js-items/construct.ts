@@ -17,6 +17,7 @@ export interface constructReturn {
 export interface preparedConstructReturn {
   basicControls: constructReturn;
   renderer: THREE.WebGLRenderer;
+  animate: (pfkt: () => void) => void;
 }
 
 /**
@@ -37,10 +38,10 @@ export const construct = (width: number, height: number): constructReturn => {
   });
 
   const light = createLight({
-    type: lightTypeEnum.Ambient,
+    type: lightTypeEnum.Point,
     color: defaultLightColor,
     intensity: defaultLightIntensity,
-    position: [0, 0, 0],
+    position: [-1.5, 1.5, 1.5],
   });
 
   return { scene, camera, light };
@@ -57,9 +58,20 @@ export const prepareConstruct = (
 
     construct.scene.add(construct.light ?? new THREE.AmbientLight(defaultLightColor, defaultLightIntensity));
 
+    const animate = (pfkt: () => void): void => {
+      const anim = (): void => {
+        requestAnimationFrame(anim);
+        pfkt();
+        if (construct.camera.camera) {
+          renderer.render(construct.scene, construct.camera.camera);
+        }
+      };
+      anim();
+    };
     return {
       basicControls: construct,
       renderer,
+      animate,
     };
   }
   return undefined;

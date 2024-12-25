@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
+import * as THREE from 'three';
 import { construct, prepareConstruct, preparedConstructReturn } from 'three-utils';
 
 /**
@@ -43,6 +44,7 @@ export class StudioContainerComponent implements OnInit {
     const constConstruct = construct(1, 1);
     this.#preparedConstruct = prepareConstruct(constConstruct, this.canvasElement()?.nativeElement);
     this.#updateRendererSize();
+    this.#testFunction();
   }
 
   /**
@@ -91,6 +93,34 @@ export class StudioContainerComponent implements OnInit {
     if (this.#preparedConstruct) {
       this.#preparedConstruct.basicControls.camera.updateCameraWindowSize(newWidth, newHeight);
       this.#preparedConstruct.renderer.setSize(this.#rendererWidth, this.#rendererHeight);
+    }
+  }
+
+  /**
+   * Executes the testFunction to create a cube and add it to the scene with some basic controls.
+   * Also positions the camera at a specific location.
+   *
+   * @returns {void}
+   */
+  #testFunction(): void {
+    console.log('testFunction');
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+
+    this.#preparedConstruct?.basicControls.scene.add(cube);
+    if (this.#preparedConstruct) {
+      const cp = this.#preparedConstruct.basicControls.camera.getPosition();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      cp[2] = 5;
+      this.#preparedConstruct.basicControls.camera.setPosition(cp);
+    }
+    if (this.#preparedConstruct) {
+      this.#preparedConstruct.animate(() => {
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+      });
     }
   }
 }
