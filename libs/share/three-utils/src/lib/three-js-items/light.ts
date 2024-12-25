@@ -160,3 +160,170 @@ const createSpotLight = (color: number, intensity: number, position: number[]): 
   light.position.set(position[0], position[1], position[2]);
   return light;
 };
+
+/**
+ * Class representing a Light object used in a 3D scene.
+ */
+export class Light {
+  #light: createLightReturn;
+  #config: lightConfig;
+
+  /**
+   * Constructor for creating a Light object with the given configuration.
+   *
+   * @param {lightConfig} config - The configuration object for the Light.
+   * @return {undefined}
+   */
+  constructor(config: lightConfig) {
+    this.#config = config;
+    this.#light = createLight(config);
+  }
+
+  /**
+   * Retrieves the current light configuration.
+   * @returns {lightConfig} The current light configuration.
+   */
+  getConfig = (): lightConfig => {
+    if (
+      this.#light instanceof THREE.DirectionalLight ||
+      this.#light instanceof THREE.PointLight ||
+      this.#light instanceof THREE.SpotLight
+    ) {
+      this.#config.position = [this.#light.position.x, this.#light.position.y, this.#light.position.z];
+      this.#config.color = this.#light.color.getHex();
+      this.#config.intensity = this.#light.intensity;
+    }
+    if (this.#light instanceof THREE.HemisphereLight) {
+      this.#config.color = this.#light.color.getHex();
+      this.#config.intensity = this.#light.intensity;
+      this.#config.skyColor = this.#light.color.getHex();
+      this.#config.groundColor = this.#light.groundColor.getHex();
+    }
+    if (this.#light instanceof THREE.RectAreaLight) {
+      this.#config.color = this.#light.color.getHex();
+      this.#config.intensity = this.#light.intensity;
+      this.#config.width = this.#light.width;
+      this.#config.height = this.#light.height;
+    }
+    if (this.#light instanceof THREE.AmbientLight) {
+      this.#config.color = this.#light.color.getHex();
+      this.#config.intensity = this.#light.intensity
+    return this.#config;
+  };
+
+  /**
+   * Set a new light configuration.
+   *
+   * @param {lightConfig} config - The new configuration for the light.
+   * @returns {void}
+   */
+  setNewLight = (config: lightConfig): void => {
+    this.#config = config;
+    this.#light = createLight(config);
+  };
+
+  /**
+   * Returns the type of light based on the configuration.
+   * @returns {lightTypeEnum} The type of light.
+   */
+  getLightType = (): lightTypeEnum => {
+    return this.#config.type;
+  };
+
+  /**
+   * Retrieves the position of the light source.
+   *
+   * @returns {THREE.Vector3} The position of the light source. If the light is of type DirectionalLight, PointLight, or SpotLight,
+   * it returns the cloned position of the light; otherwise, it returns a new Vector3 instance.
+   */
+  getLightPosition = (): THREE.Vector3 => {
+    if (
+      this.#light instanceof THREE.DirectionalLight ||
+      this.#light instanceof THREE.PointLight ||
+      this.#light instanceof THREE.SpotLight
+    ) {
+      return this.#light.position.clone();
+    }
+    return new THREE.Vector3();
+  };
+
+  /**
+   * Set the position of the light.
+   * @param {THREE.Vector3} newPosition - The new position to set the light to.
+   * @returns {void}
+   */
+  setLightPosition = (newPosition: THREE.Vector3): void => {
+    if (
+      this.#light instanceof THREE.DirectionalLight ||
+      this.#light instanceof THREE.PointLight ||
+      this.#light instanceof THREE.SpotLight
+    ) {
+      this.#light.position.set(newPosition.x, newPosition.y, newPosition.z);
+    }
+  };
+
+  /**
+   * Set the color of the light.
+   * @param {number} newColor - The new color to set the light to.
+   * @returns {void}
+   */
+  setLightColor = (newColor: number): void => {
+    if (
+      this.#light instanceof THREE.DirectionalLight ||
+      this.#light instanceof THREE.PointLight ||
+      this.#light instanceof THREE.SpotLight
+    ) {
+      this.#light.color = new THREE.Color(newColor);
+    }
+  };
+
+  /**
+   * Set the color of the sky for a 3D scene.
+   * @param {number} newSkyColor - The new color in hexadecimal format to set as the sky color.
+   * @returns {void}
+   */
+  setSkyColor = (newSkyColor: number): void => {
+    if (this.#light instanceof THREE.HemisphereLight) {
+      this.#light.color = new THREE.Color(newSkyColor);
+    }
+  };
+
+  /**
+   * Set the color of the ground for a 3D scene.
+   * @param {number} newGroundColor - The new color in hexadecimal format to set as the ground color.
+   * @returns {void}
+   */
+  setGroundColor = (newGroundColor: number): void => {
+    if (this.#light instanceof THREE.HemisphereLight) {
+      this.#light.groundColor = new THREE.Color(newGroundColor);
+    }
+  };
+
+  /**
+   * Set the intensity of the light.
+   * @param {number} newIntensity - The new intensity to set the light to.
+   * @returns {void}
+   */
+  setLightIntensity = (newIntensity: number): void => {
+    if (
+      this.#light instanceof THREE.DirectionalLight ||
+      this.#light instanceof THREE.PointLight ||
+      this.#light instanceof THREE.SpotLight
+    ) {
+      this.#light.intensity = newIntensity;
+    }
+  };
+
+  /**
+   * Set the new size of the RectAreaLight.
+   * @param {number} newWidth - The new width to set the RectAreaLight to.
+   * @param {number} newHeight - The new height to set the RectAreaLight to.
+   * @returns {void}
+   */
+  setNewRectAreaLightSize = (newWidth: number, newHeight: number): void => {
+    if (this.#light instanceof THREE.RectAreaLight) {
+      this.#light.width = newWidth;
+      this.#light.height = newHeight;
+    }
+  };
+}

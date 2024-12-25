@@ -112,8 +112,7 @@ export class StudioContainerComponent implements OnInit {
     this.#preparedConstruct?.basicControls.scene.add(cube);
     if (this.#preparedConstruct) {
       const cp = this.#preparedConstruct.basicControls.camera.getPosition();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      cp[2] = 5;
+      cp.z = 5;
       this.#preparedConstruct.basicControls.camera.setPosition(cp);
     }
     if (this.#preparedConstruct) {

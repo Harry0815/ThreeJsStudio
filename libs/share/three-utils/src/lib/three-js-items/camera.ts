@@ -136,16 +136,27 @@ export class Camera {
     }
   };
 
-  setPosition = (newPosition: number[]): void => {
+  /**
+   * Set the position of the camera to a new location.
+   *
+   * @param {THREE.Vector3} newPosition - The new position coordinates for the camera.
+   *
+   * @returns {void}
+   */
+  setPosition = (newPosition: THREE.Vector3): void => {
     if (this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.position.set(newPosition[0], newPosition[1], newPosition[2]);
+      this.camera.position.set(newPosition.x, newPosition.y, newPosition.z);
     }
   };
 
-  getPosition = (): number[] => {
+  /**
+   * Retrieves the position of the camera.
+   * @returns {THREE.Vector3} The position of the camera as a THREE.Vector3 object.
+   */
+  getPosition = (): THREE.Vector3 => {
     if (this.camera instanceof THREE.PerspectiveCamera) {
-      return [this.camera.position.x, this.camera.position.y, this.camera.position.z];
+      return this.camera.position.clone();
     }
-    return [0, 0, 0];
+    return new THREE.Vector3();
   };
 }
