@@ -207,7 +207,8 @@ export class Light {
     }
     if (this.#light instanceof THREE.AmbientLight) {
       this.#config.color = this.#light.color.getHex();
-      this.#config.intensity = this.#light.intensity
+      this.#config.intensity = this.#light.intensity;
+    }
     return this.#config;
   };
 
