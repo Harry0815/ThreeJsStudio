@@ -54,6 +54,9 @@ export type createLightReturn =
   | THREE.AmbientLight
   | THREE.HemisphereLight
   | THREE.RectAreaLight
+  | THREE.SpotLight
+  | THREE.PointLight
+  | THREE.DirectionalLight
   | undefined;
 
 /**
@@ -96,7 +99,9 @@ export const createLight = (cf: lightConfig): createLightReturn => {
  * @returns An ambient light
  */
 const createAmbientLight = (color: number, intensity: number): THREE.AmbientLight => {
-  return new THREE.AmbientLight(color, intensity);
+  const light = new THREE.AmbientLight(color, intensity);
+  light.castShadow = true;
+  return light;
 };
 
 /**
@@ -109,6 +114,7 @@ const createAmbientLight = (color: number, intensity: number): THREE.AmbientLigh
 const createDirectionalLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.DirectionalLight(color, intensity);
   light.position.set(position[0], position[1], position[2]);
+  light.castShadow = true;
   return light;
 };
 
@@ -120,7 +126,9 @@ const createDirectionalLight = (color: number, intensity: number, position: numb
  * @returns A hemisphere light
  */
 const createHemisphereLight = (skyColor: number, groundColor: number, intensity: number): THREE.HemisphereLight => {
-  return new THREE.HemisphereLight(skyColor, groundColor, intensity);
+  const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+  light.castShadow = true;
+  return light;
 };
 
 /**
@@ -131,8 +139,9 @@ const createHemisphereLight = (skyColor: number, groundColor: number, intensity:
  * @returns A point light
  */
 const createPointLight = (color: number, intensity: number, position: number[]): THREE.Light => {
-  const light = new THREE.PointLight(color, intensity);
+  const light = new THREE.PointLight(color, intensity, 100);
   light.position.set(position[0], position[1], position[2]);
+  light.castShadow = true;
   return light;
 };
 
@@ -145,7 +154,9 @@ const createPointLight = (color: number, intensity: number, position: number[]):
  * @returns A rect area light
  */
 const createRectAreaLight = (color: number, intensity: number, width: number, height: number): THREE.RectAreaLight => {
-  return new THREE.RectAreaLight(color, intensity, width, height);
+  const light = new THREE.RectAreaLight(color, intensity, width, height);
+  light.castShadow = true;
+  return light;
 };
 
 /**
@@ -158,6 +169,7 @@ const createRectAreaLight = (color: number, intensity: number, width: number, he
 const createSpotLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.SpotLight(color, intensity);
   light.position.set(position[0], position[1], position[2]);
+  light.castShadow = true;
   return light;
 };
 
@@ -178,6 +190,19 @@ export class Light {
     this.#config = config;
     this.#light = createLight(config);
   }
+
+  /**
+   * Retrieves the instance of the light object.
+   *
+   * This method returns the private `#light` property,
+   * which is expected to represent a specific light object or configuration.
+   *
+   * @function
+   * @returns {createLightReturn} The light object associated with this instance.
+   */
+  getLight = (): createLightReturn => {
+    return this.#light;
+  };
 
   /**
    * Retrieves the current light configuration.
@@ -257,7 +282,10 @@ export class Light {
     if (
       this.#light instanceof THREE.DirectionalLight ||
       this.#light instanceof THREE.PointLight ||
-      this.#light instanceof THREE.SpotLight
+      this.#light instanceof THREE.SpotLight ||
+      this.#light instanceof THREE.RectAreaLight ||
+      this.#light instanceof THREE.HemisphereLight ||
+      this.#light instanceof THREE.AmbientLight
     ) {
       this.#light.position.set(newPosition.x, newPosition.y, newPosition.z);
     }
@@ -272,7 +300,10 @@ export class Light {
     if (
       this.#light instanceof THREE.DirectionalLight ||
       this.#light instanceof THREE.PointLight ||
-      this.#light instanceof THREE.SpotLight
+      this.#light instanceof THREE.SpotLight ||
+      this.#light instanceof THREE.RectAreaLight ||
+      this.#light instanceof THREE.HemisphereLight ||
+      this.#light instanceof THREE.AmbientLight
     ) {
       this.#light.color = new THREE.Color(newColor);
     }
@@ -309,7 +340,10 @@ export class Light {
     if (
       this.#light instanceof THREE.DirectionalLight ||
       this.#light instanceof THREE.PointLight ||
-      this.#light instanceof THREE.SpotLight
+      this.#light instanceof THREE.SpotLight ||
+      this.#light instanceof THREE.RectAreaLight ||
+      this.#light instanceof THREE.HemisphereLight ||
+      this.#light instanceof THREE.AmbientLight
     ) {
       this.#light.intensity = newIntensity;
     }

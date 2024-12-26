@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import { construct, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
 
 /**
  * Represents the container component for the studio.
@@ -106,10 +106,26 @@ export class StudioContainerComponent implements OnInit {
     console.log('testFunction');
 
     const geometry = new THREE.BoxGeometry(1, 1, 1);
+    geometry.rotateX(-Math.PI / 2.15);
     const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
 
+    cube.position.y = 1;
+    const boundingBoxEdge = Math.sqrt(3) * 1;
+
+    // this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
+    this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
     this.#preparedConstruct?.basicControls.scene.add(cube);
+
+    const light = new Light({
+      type: lightTypeEnum.Spot,
+      color: 0xff0000,
+      intensity: 100,
+      position: [0, -boundingBoxEdge * 2, 0],
+    });
+    this.#preparedConstruct?.addLight('spot_red_left', light);
+    // this.#preparedConstruct?.deleteLight('standard');
+
     if (this.#preparedConstruct) {
       const cp = this.#preparedConstruct.basicControls.camera.getPosition();
       cp.z = 5;
@@ -121,5 +137,36 @@ export class StudioContainerComponent implements OnInit {
         cube.rotation.y += 0.01;
       });
     }
+  }
+
+  /**
+   * Creates and returns a ground floor mesh object using THREE.js.
+   * The ground floor is represented as a plane geometry with a standard material.
+   *
+   * @returns {THREE.Mesh} A mesh object representing the ground floor.
+   */
+  #createGroundFloor(): THREE.Mesh {
+    console.log('createGroundFloor');
+    const geometry = new THREE.PlaneGeometry(10, 10);
+    geometry.rotateX(-Math.PI / 2.15);
+    const material = new THREE.MeshStandardMaterial({ color: 0x0f0f0f });
+    return new THREE.Mesh(geometry, material);
+  }
+
+  /**
+   * Creates a 3D view sphere using a box geometry with edges highlighted.
+   *
+   * @param {number} edgeLength - The length of the edges of the box geometry.
+   * @returns {THREE.LineSegments} A LineSegments object representing the geometry with highlighted edges.
+   */
+  #greateViewSphere(edgeLength: number): THREE.LineSegments {
+    console.log('greateViewSphere');
+    const geometry = new THREE.BoxGeometry(edgeLength, edgeLength, edgeLength);
+    const edges = new THREE.EdgesGeometry(geometry);
+    const material = new THREE.LineBasicMaterial({ color: 0xffff00 });
+    const lines = new THREE.LineSegments(edges, material);
+    lines.translateY(edgeLength / 2);
+    lines.rotateX(-Math.PI / 2.15);
+    return lines;
   }
 }

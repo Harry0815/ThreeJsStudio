@@ -33,7 +33,9 @@ describe('Light', () => {
   test('should set and get correct position of the light', () => {
     const newPosition = new THREE.Vector3(10, 20, 30);
     light.setLightPosition(newPosition);
-    const config = light.getConfig();
+    const config: lightConfig | undefined = light.getConfig();
+    const position = new THREE.Vector3(...config.position);
+    expect(newPosition.equals(position)).toBe(true);
   });
 
   test('should set the color of the light', () => {
@@ -56,7 +58,7 @@ describe('Light', () => {
     };
     const hemisphereLight = new Light(hemisphereLightConfig);
     hemisphereLight.setSkyColor(0x0000ff);
-    const config = hemisphereLight.getConfig();
+    const config: lightConfig | undefined = hemisphereLight.getConfig();
     expect(config.color).toBe(0x0000ff);
   });
 
@@ -70,14 +72,14 @@ describe('Light', () => {
     };
     const hemisphereLight = new Light(hemisphereLightConfig);
     hemisphereLight.setGroundColor(0xd2691e);
-    const config = hemisphereLight.getConfig();
+    const config: lightConfig | undefined = hemisphereLight.getConfig();
     expect(config.groundColor).toBe(0xd2691e);
   });
 
   test('should set the intensity of the light', () => {
     const newIntensity = 0.7;
     light.setLightIntensity(newIntensity);
-    const config = light.getConfig();
+    const config: lightConfig | undefined = light.getConfig();
     expect(config.intensity).toBe(newIntensity);
   });
 
@@ -90,9 +92,9 @@ describe('Light', () => {
       width: 10,
       height: 20,
     };
-    const rectAreaLight = new Light(rectAreaLightConfig);
+    const rectAreaLight: Light = new Light(rectAreaLightConfig);
     rectAreaLight.setNewRectAreaLightSize(5, 10);
-    const config = rectAreaLight.getConfig();
+    const config: lightConfig | undefined = rectAreaLight.getConfig();
     expect(config.width).toBe(5);
     expect(config.height).toBe(10);
   });
