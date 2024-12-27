@@ -7,7 +7,7 @@ import {
   Light,
   lightTypeEnum,
   prepareConstruct,
-  preparedConstructReturn,
+  preparedConstructReturn
 } from 'three-utils';
 
 /**
@@ -171,7 +171,7 @@ export class StudioContainerComponent implements OnInit {
     if (helper3) {
       this.#preparedConstruct?.basicControls.scene.add(helper3);
     }
-    directionalLight.switch(true, false);
+    directionalLight.switch(true, true);
 
     this.#preparedConstruct?.deleteLight('standard');
 

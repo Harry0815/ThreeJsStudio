@@ -394,7 +394,7 @@ export class Light {
     if (this.#light) {
       this.#light.visible = on;
       if (this.#helper) {
-        this.#helper.visible = onHelper;
+        this.#helper.visible = on ? onHelper : false;
       }
     }
   };
@@ -430,7 +430,7 @@ export class Light {
    */
   readonly #createHelper = (): createLightHelperReturn => {
     if (this.#light instanceof THREE.DirectionalLight) {
-      return new THREE.DirectionalLightHelper(this.#light);
+      return new THREE.DirectionalLightHelper(this.#light, 0.2);
     }
     if (this.#light instanceof THREE.PointLight) {
       return new THREE.PointLightHelper(this.#light);

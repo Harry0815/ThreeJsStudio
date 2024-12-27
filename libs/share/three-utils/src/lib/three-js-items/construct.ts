@@ -85,6 +85,8 @@ export const prepareConstruct = (
     controls.target.set(0, 0, 0);
     controls.enableZoom = true;
     controls.maxPolarAngle = Infinity;
+    controls.enabled = true;
+    controls.enablePan = true;
   }
   canvasElement.appendChild(renderer.domElement);
 
