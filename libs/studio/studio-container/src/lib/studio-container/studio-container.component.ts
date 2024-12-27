@@ -104,10 +104,13 @@ export class StudioContainerComponent implements OnInit {
   }
 
   /**
-   * Executes the testFunction to create a cube and add it to the scene with some basic controls.
-   * Also positions the camera at a specific location.
+   * A test function to demonstrate the usage of the prepared construct.
    *
-   * @returns {void}
+   * This function creates a box geometry, a ground floor, and a view sphere. It also adds
+   * ambient, hemisphere, and directional lights to the scene. The camera position is updated
+   * to provide a better view of the scene. The function also animates the box geometry.
+   *
+   * @return {void} Does not return a value.
    */
   #testFunction(): void {
     console.log('testFunction');
