@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three-stdlib';
 import { Camera, cameraTypeEnum } from './camera';
 import { Light, lightTypeEnum } from './light';
 
@@ -17,6 +18,7 @@ export interface constructReturn {
 export interface preparedConstructReturn {
   basicControls: constructReturn;
   renderer: THREE.WebGLRenderer;
+  controls: OrbitControls | undefined;
   animate: (pfkt: () => void) => void;
   addLight: (key: string, light: Light) => void;
   deleteLight: (key: string) => void;
@@ -75,11 +77,16 @@ export const prepareConstruct = (
   }
 
   const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(canvasElement.width, canvasElement.height);
-  canvasElement.appendChild(renderer.domElement);
+  let controls: OrbitControls | undefined;
 
-  if (canvasElement instanceof HTMLCanvasElement) {
+  renderer.setSize(canvasElement.width, canvasElement.height);
+  if (construct.camera.camera instanceof THREE.PerspectiveCamera) {
+    controls = new OrbitControls(construct.camera.camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.enableZoom = true;
+    controls.maxPolarAngle = Infinity;
   }
+  canvasElement.appendChild(renderer.domElement);
 
   for (const l of construct.lights.values()) {
     if (l.getLight()) {
@@ -87,6 +94,20 @@ export const prepareConstruct = (
     }
   }
 
+  /**
+   * A function that continuously animates a given callback function (`pfkt`)
+   * and renders a 3D scene using a camera and renderer if available.
+   *
+   * The animation loop is achieved using `requestAnimationFrame` to ensure smooth rendering
+   * synchronized with the display refresh rate. The provided callback function is executed
+   * within the loop, allowing custom logic to be performed during each frame.
+   *
+   * The rendering process uses a `construct` object containing a `scene` and a `camera` object.
+   * If the camera is defined, the renderer will render the scene from the camera's perspective.
+   *
+   * @param {Function} pfkt - A callback function that is executed during each frame of the animation.
+   * @returns {void} This function does not return any value.
+   */
   const animate = (pfkt: () => void): void => {
     const anim = (): void => {
       requestAnimationFrame(anim);
@@ -98,11 +119,35 @@ export const prepareConstruct = (
     anim();
   };
 
+  /**
+   * Adds a light source to the construct's scene and initializes its state.
+   *
+   * @param {string} key - A unique identifier for the light to be added.
+   * @param {Light} light - The Light object to be added, which defines the characteristics of the light source.
+   *
+   * This function performs the following:
+   * 1. Associates the given light with the specified key in the construct's lights map.
+   * 2. Switches the light off with the initial `switch` method.
+   * 3. Adds the light source to the construct's scene using its `getLight` method.
+   *    If `getLight` returns `null`, a default ambient light is added with a predefined color and intensity.
+   */
   const addLight = (key: string, light: Light): void => {
     construct.lights.set(key, light);
+    light.switch(false, false);
     construct.scene.add(light.getLight() ?? new THREE.AmbientLight(defaultLightColor, defaultLightIntensity));
   };
 
+  /**
+   * Deletes a light object from the scene and its associated collection.
+   *
+   * This function removes a light from the `construct.lights` map using the provided key.
+   * If the light exists and has a valid THREE.Light instance, it is also removed from the
+   * `construct.scene`. The function ensures that the light is properly removed from both
+   * the data structure and the 3D scene to maintain consistency.
+   *
+   * @param {string} key - The unique identifier for the light object to be removed.
+   * @returns {void}
+   */
   const deleteLight = (key: string): void => {
     const light = construct.lights.get(key);
     if (light?.getLight()) {
@@ -113,6 +158,7 @@ export const prepareConstruct = (
 
   return {
     basicControls: construct,
+    controls,
     renderer,
     addLight,
     deleteLight,

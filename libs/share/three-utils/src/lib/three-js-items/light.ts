@@ -59,6 +59,13 @@ export type createLightReturn =
   | THREE.DirectionalLight
   | undefined;
 
+export type createLightHelperReturn =
+  | THREE.PointLightHelper
+  | THREE.SpotLightHelper
+  | THREE.DirectionalLightHelper
+  | THREE.HemisphereLightHelper
+  | undefined;
+
 /**
  * Create a light based on the configuration
  * @param cf Configuration for the light
@@ -139,7 +146,7 @@ const createHemisphereLight = (skyColor: number, groundColor: number, intensity:
  * @returns A point light
  */
 const createPointLight = (color: number, intensity: number, position: number[]): THREE.Light => {
-  const light = new THREE.PointLight(color, intensity, 100);
+  const light = new THREE.PointLight(color, intensity);
   light.position.set(position[0], position[1], position[2]);
   light.castShadow = true;
   return light;
@@ -178,6 +185,7 @@ const createSpotLight = (color: number, intensity: number, position: number[]): 
  */
 export class Light {
   #light: createLightReturn;
+  #helper: createLightHelperReturn;
   #config: lightConfig;
 
   /**
@@ -189,6 +197,7 @@ export class Light {
   constructor(config: lightConfig) {
     this.#config = config;
     this.#light = createLight(config);
+    this.#helper = this.#createHelper();
   }
 
   /**
@@ -202,6 +211,17 @@ export class Light {
    */
   getLight = (): createLightReturn => {
     return this.#light;
+  };
+
+  /**
+   * Retrieves the helper object associated with this instance.
+   *
+   * @function
+   * @returns {THREE.Object3D | undefined} Returns the helper object as a THREE.Object3D instance,
+   * or undefined if no helper is defined.
+   */
+  getHelper = (): createLightHelperReturn => {
+    return this.#helper;
   };
 
   /**
@@ -246,6 +266,7 @@ export class Light {
   setNewLight = (config: lightConfig): void => {
     this.#config = config;
     this.#light = createLight(config);
+    this.#helper = this.#createHelper();
   };
 
   /**
@@ -360,5 +381,66 @@ export class Light {
       this.#light.width = newWidth;
       this.#light.height = newHeight;
     }
+  };
+
+  /**
+   * Toggles the visibility of a light object based on the provided state.
+   *
+   * @function
+   * @param {boolean} on - A boolean value indicating whether the light should be turned on (true) or off (false).
+   * @param onHelper - A boolean value indicating whether the lightHelper should be turned on (true) or off (false).
+   */
+  switch = (on: boolean, onHelper: boolean): void => {
+    if (this.#light) {
+      this.#light.visible = on;
+      if (this.#helper) {
+        this.#helper.visible = onHelper;
+      }
+    }
+  };
+
+  /**
+   * Determines whether the light is currently visible and active.
+   *
+   * @function
+   * @returns {boolean} Returns true if the light is visible and active; otherwise, returns false.
+   */
+  isOn = (): boolean => {
+    if (this.#light) {
+      return this.#light.visible;
+    }
+    return false;
+  };
+
+  /**
+   * Creates a helper object for the associated light instance, if applicable.
+   *
+   * This method checks the type of the private `#light` property and returns an
+   * appropriate helper object from the THREE.js library based on the light type.
+   * Supported types include:
+   * - DirectionalLight: Returns a `THREE.DirectionalLightHelper` with a size of 5.
+   * - PointLight: Returns a `THREE.PointLightHelper` with a size of 1.
+   * - SpotLight: Returns a `THREE.SpotLightHelper`.
+   * - HemisphereLight: Returns a `THREE.HemisphereLightHelper` with a size of 5.
+   *
+   * If the light type is not supported or the `#light` property is undefined,
+   * this method returns `undefined`.
+   *
+   * @returns {createLightHelperReturn} A helper object for the light, or `undefined` if the light type is unsupported or undefined.
+   */
+  readonly #createHelper = (): createLightHelperReturn => {
+    if (this.#light instanceof THREE.DirectionalLight) {
+      return new THREE.DirectionalLightHelper(this.#light);
+    }
+    if (this.#light instanceof THREE.PointLight) {
+      return new THREE.PointLightHelper(this.#light);
+    }
+    if (this.#light instanceof THREE.SpotLight) {
+      return new THREE.SpotLightHelper(this.#light);
+    }
+    if (this.#light instanceof THREE.HemisphereLight) {
+      return new THREE.HemisphereLightHelper(this.#light, 5);
+    }
+    return undefined;
   };
 }

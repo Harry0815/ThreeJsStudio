@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import {
+  construct,
+  createLightHelperReturn,
+  Light,
+  lightTypeEnum,
+  prepareConstruct,
+  preparedConstructReturn,
+} from 'three-utils';
 
 /**
  * Represents the container component for the studio.
@@ -105,26 +112,65 @@ export class StudioContainerComponent implements OnInit {
   #testFunction(): void {
     console.log('testFunction');
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     geometry.rotateX(-Math.PI / 2.15);
     const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
 
-    cube.position.y = 1;
-    const boundingBoxEdge = Math.sqrt(3) * 1;
+    const boundingBox = new THREE.Box3().setFromObject(cube);
+    const maxEdgeLenghth = Math.max(
+      boundingBox.max.x - boundingBox.min.x,
+      boundingBox.max.y - boundingBox.min.y,
+      boundingBox.max.z - boundingBox.min.z,
+    );
+    const boundingBoxEdge = Math.sqrt(3) * maxEdgeLenghth;
+    cube.position.y = maxEdgeLenghth;
 
-    // this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
+    if (this.#preparedConstruct?.controls) {
+      this.#preparedConstruct.controls.minDistance = boundingBoxEdge;
+    }
+    this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
     this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
     this.#preparedConstruct?.basicControls.scene.add(cube);
 
-    const light = new Light({
-      type: lightTypeEnum.Spot,
-      color: 0xff0000,
-      intensity: 100,
-      position: [0, -boundingBoxEdge * 2, 0],
+    const ambientLight = new Light({
+      type: lightTypeEnum.Ambient,
+      color: 0x7f7e80,
+      intensity: 0.7 * Math.PI,
+      position: [0, 0, 0],
     });
-    this.#preparedConstruct?.addLight('spot_red_left', light);
-    // this.#preparedConstruct?.deleteLight('standard');
+    const hemisphereLight = new Light({
+      type: lightTypeEnum.Hemisphere,
+      color: 0xfbfcff,
+      skyColor: 0xfbfcff,
+      groundColor: 0x7e7a80,
+      intensity: 0.32 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
+    });
+    const directionalLight = new Light({
+      type: lightTypeEnum.Directional,
+      color: 0xffffff,
+      intensity: 0.3 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
+    });
+    this.#preparedConstruct?.addLight('ambient', ambientLight);
+    this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
+    this.#preparedConstruct?.addLight('direct', directionalLight);
+    const helper1: createLightHelperReturn = ambientLight.getHelper();
+    if (helper1) {
+      this.#preparedConstruct?.basicControls.scene.add(helper1);
+    }
+    const helper2: createLightHelperReturn = hemisphereLight.getHelper();
+    if (helper2) {
+      this.#preparedConstruct?.basicControls.scene.add(helper2);
+    }
+    const helper3: createLightHelperReturn = directionalLight.getHelper();
+    if (helper3) {
+      this.#preparedConstruct?.basicControls.scene.add(helper3);
+    }
+    directionalLight.switch(true, false);
+
+    this.#preparedConstruct?.deleteLight('standard');
 
     if (this.#preparedConstruct) {
       const cp = this.#preparedConstruct.basicControls.camera.getPosition();
