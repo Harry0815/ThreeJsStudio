@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import { GLTF } from 'three-stdlib';
+import { construct, glbLoader, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
 
 /**
  * Represents the container component for the studio.
@@ -36,7 +37,7 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {void} Does not return a value.
    */
-  ngOnInit(): void {
+  async ngOnInit(): void {
     if (!this.canvasElement()) {
       return;
     }
@@ -44,7 +45,7 @@ export class StudioContainerComponent implements OnInit {
     const constConstruct = construct(1, 1);
     this.#preparedConstruct = prepareConstruct(constConstruct, this.canvasElement()?.nativeElement);
     this.#updateRendererSize();
-    this.#testFunction();
+    await this.#testFunction();
   }
 
   /**
@@ -98,78 +99,101 @@ export class StudioContainerComponent implements OnInit {
   /**
    * A test function to demonstrate the usage of the prepared construct.
    *
-   * This function creates a box geometry, a ground floor, and a view sphere. It also adds
-   * ambient, hemisphere, and directional lights to the scene. The camera position is updated
-   * to provide a better view of the scene. The function also animates the box geometry.
+   * This function retrieves content based on a specified parameter, creates a ground floor mesh object,
+   * a 3D view sphere, and adds light sources to the scene. It also initializes the camera position,
+   * sets up the animation loop, and prepares the orbit controls for the scene.
    *
-   * @return {void} Does not return a value.
+   * @return {Promise<void>} A Promise that resolves when the function completes.
    */
-  #testFunction(): void {
+  async #testFunction(): Promise<void> {
     console.log('testFunction');
 
-    const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
-    geometry.rotateX(-Math.PI / 2.15);
-    const material = new THREE.MeshStandardMaterial({ color: 0xfbaa12 });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.castShadow = true;
+    let boundingBoxEdge = 1;
+    const content = await this.#getContentTest(true);
+    if (content) {
+      const boundingBox = new THREE.Box3().setFromObject(content);
+      boundingBoxEdge = Math.sqrt(
+        Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
+          Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
+          Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
+      );
+      content.position.y = boundingBoxEdge / 2;
 
-    const boundingBox = new THREE.Box3().setFromObject(cube);
-    const boundingBoxEdge = Math.sqrt(
-      Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
-        Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
-        Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
-    );
-    cube.position.y = boundingBoxEdge / 2;
+      this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
+      this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
+      this.#preparedConstruct?.basicControls.scene.add(content);
 
-    this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
-    this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
-    this.#preparedConstruct?.basicControls.scene.add(cube);
+      const ambientLight = new Light({
+        type: lightTypeEnum.Ambient,
+        color: 0x7f7e80,
+        intensity: 0.7 * Math.PI,
+        position: [0, 0, 0],
+      });
+      const hemisphereLight = new Light({
+        type: lightTypeEnum.Hemisphere,
+        color: 0xfbfcff,
+        skyColor: 0xfbfcff,
+        groundColor: 0x7e7a80,
+        intensity: 0.32 * Math.PI,
+        position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
+      });
+      const directionalLight = new Light({
+        type: lightTypeEnum.Directional,
+        color: 0xffffff,
+        intensity: 0.3 * Math.PI,
+        position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
+      });
 
-    const ambientLight = new Light({
-      type: lightTypeEnum.Ambient,
-      color: 0x7f7e80,
-      intensity: 0.7 * Math.PI,
-      position: [0, 0, 0],
-    });
-    const hemisphereLight = new Light({
-      type: lightTypeEnum.Hemisphere,
-      color: 0xfbfcff,
-      skyColor: 0xfbfcff,
-      groundColor: 0x7e7a80,
-      intensity: 0.32 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
-    });
-    const directionalLight = new Light({
-      type: lightTypeEnum.Directional,
-      color: 0xffffff,
-      intensity: 0.3 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
-    });
+      this.#preparedConstruct?.addLight('ambient', ambientLight);
+      this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
+      this.#preparedConstruct?.addLight('direct', directionalLight);
+      this.#preparedConstruct?.deleteLight('standard');
+      this.#preparedConstruct?.switchAllLights(true, false);
 
-    this.#preparedConstruct?.addLight('ambient', ambientLight);
-    this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
-    this.#preparedConstruct?.addLight('direct', directionalLight);
-    this.#preparedConstruct?.deleteLight('standard');
-    this.#preparedConstruct?.switchAllLights(true, false);
+      if (this.#preparedConstruct) {
+        const cp = this.#preparedConstruct.basicControls.camera.getPosition();
+        cp.z = 5;
+        this.#preparedConstruct.basicControls.camera.setPosition(cp);
+      }
+      if (this.#preparedConstruct) {
+        this.#preparedConstruct.animate(() => {
+          content.rotation.x += 0.01;
+          content.rotation.y += 0.01;
+        });
 
-    if (this.#preparedConstruct) {
-      const cp = this.#preparedConstruct.basicControls.camera.getPosition();
-      cp.z = 5;
-      this.#preparedConstruct.basicControls.camera.setPosition(cp);
+        this.#preparedConstruct.prepareOrbitControls({
+          enabled: true,
+          enablePan: false,
+          enableRotate: true,
+          enableZoom: true,
+          minDistance: boundingBoxEdge,
+        });
+      }
     }
-    if (this.#preparedConstruct) {
-      this.#preparedConstruct.animate(() => {
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-      });
+  }
 
-      this.#preparedConstruct.prepareOrbitControls({
-        enabled: true,
-        enablePan: false,
-        enableRotate: true,
-        enableZoom: true,
-        minDistance: boundingBoxEdge,
-      });
+  /**
+   * Retrieves content based on the specified parameter.
+   *
+   * @param {boolean} gltfFile - Indicates whether to load content from a GLTF file.
+   * @returns {Promise<THREE.Object3D | undefined>} - A Promise that resolves to a THREE.Object3D instance if successful,
+   * or undefined if the content cannot be retrieved.
+   */
+  async #getContentTest(gltfFile: boolean): Promise<THREE.Object3D | undefined> {
+    console.log('getContentTest');
+    if (gltfFile) {
+      const gltf: GLTF | undefined = await glbLoader(undefined, 'cube/viewCube.glb');
+      if (gltf?.scene) {
+        return gltf.scene;
+      }
+      return undefined;
+    } else {
+      const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
+      geometry.rotateX(-Math.PI / 2.15);
+      const material = new THREE.MeshStandardMaterial({ color: 0xfbaa12 });
+      const cube = new THREE.Mesh(geometry, material);
+      cube.castShadow = true;
+      return cube;
     }
   }
 

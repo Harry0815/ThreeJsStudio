@@ -210,14 +210,18 @@ export class Light {
    * Adjusts `near` and `far` planes for perspective cameras if applicable.
    */
   configureShadow = (): void => {
-    if (this.#light && this.#light.shadow) {
-      this.#light.castShadow = true;
-      this.#light.shadow.mapSize.width = 512; // default
-      this.#light.shadow.mapSize.height = 512; // default
-      if (this.#light.shadow.camera instanceof THREE.PerspectiveCamera) {
-        this.#light.shadow.camera.near = 0.5; // default
-        this.#light.shadow.camera.far = 500; // default
+    try {
+      if (this.#light instanceof THREE.PointLight || this.#light instanceof THREE.SpotLight) {
+        this.#light.castShadow = true;
+        this.#light.shadow.mapSize.width = 512; // default
+        this.#light.shadow.mapSize.height = 512; // default
+        if (this.#light.shadow.camera instanceof THREE.PerspectiveCamera) {
+          this.#light.shadow.camera.near = 0.5; // default
+          this.#light.shadow.camera.far = 500; // default
+        }
       }
+    } catch (e) {
+      console.error(e);
     }
   };
 

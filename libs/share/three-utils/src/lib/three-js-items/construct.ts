@@ -90,8 +90,8 @@ export const prepareConstruct = (
   let controls: OrbitControls | undefined;
 
   renderer.setSize(canvasElement.width, canvasElement.height);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // renderer.shadowMap.enabled = true;
+  // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   if (construct.camera.camera instanceof THREE.PerspectiveCamera) {
     controls = new OrbitControls(construct.camera.camera, renderer.domElement);
