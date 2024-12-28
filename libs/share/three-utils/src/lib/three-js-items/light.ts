@@ -148,7 +148,6 @@ const createHemisphereLight = (skyColor: number, groundColor: number, intensity:
 const createPointLight = (color: number, intensity: number, position: number[]): THREE.Light => {
   const light = new THREE.PointLight(color, intensity);
   light.position.set(position[0], position[1], position[2]);
-  light.castShadow = true;
   return light;
 };
 
@@ -197,8 +196,30 @@ export class Light {
   constructor(config: lightConfig) {
     this.#config = config;
     this.#light = createLight(config);
+    this.configureShadow();
+    if (config.position.length === 3) {
+      this.setLightPosition(new THREE.Vector3(config.position[0], config.position[1], config.position[2]));
+    }
     this.#helper = this.#createHelper();
   }
+
+  /**
+   * Configures the shadow properties for a light source in a 3D environment.
+   * This method enables shadow casting for the light source if it supports shadows
+   * and sets default values for the shadow's map size and camera properties.
+   * Adjusts `near` and `far` planes for perspective cameras if applicable.
+   */
+  configureShadow = (): void => {
+    if (this.#light && this.#light.shadow) {
+      this.#light.castShadow = true;
+      this.#light.shadow.mapSize.width = 512; // default
+      this.#light.shadow.mapSize.height = 512; // default
+      if (this.#light.shadow.camera instanceof THREE.PerspectiveCamera) {
+        this.#light.shadow.camera.near = 0.5; // default
+        this.#light.shadow.camera.far = 500; // default
+      }
+    }
+  };
 
   /**
    * Retrieves the instance of the light object.

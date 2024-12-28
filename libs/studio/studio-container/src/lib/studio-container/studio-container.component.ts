@@ -1,14 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import {
-  construct,
-  createLightHelperReturn,
-  Light,
-  lightTypeEnum,
-  prepareConstruct,
-  preparedConstructReturn
-} from 'three-utils';
+import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
 
 /**
  * Represents the container component for the studio.
@@ -92,14 +85,13 @@ export class StudioContainerComponent implements OnInit {
    * @param newHeight - The new height for the renderer.
    */
   #updateCameraWindowSize(newWidth: number, newHeight: number): void {
-    console.log('updateCameraWindowSize', newHeight, newWidth);
-
     this.#rendererWidth = newWidth;
     this.#rendererHeight = newHeight;
 
+    console.log('updateCameraWindowSize', this.#rendererWidth, this.#rendererHeight);
+
     if (this.#preparedConstruct) {
-      this.#preparedConstruct.basicControls.camera.updateCameraWindowSize(newWidth, newHeight);
-      this.#preparedConstruct.renderer.setSize(this.#rendererWidth, this.#rendererHeight);
+      this.#preparedConstruct.updateCameraWindowSize(this.#rendererWidth, this.#rendererHeight);
     }
   }
 
@@ -117,21 +109,18 @@ export class StudioContainerComponent implements OnInit {
 
     const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     geometry.rotateX(-Math.PI / 2.15);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const material = new THREE.MeshStandardMaterial({ color: 0xfbaa12 });
     const cube = new THREE.Mesh(geometry, material);
+    cube.castShadow = true;
 
     const boundingBox = new THREE.Box3().setFromObject(cube);
-    const maxEdgeLenghth = Math.max(
-      boundingBox.max.x - boundingBox.min.x,
-      boundingBox.max.y - boundingBox.min.y,
-      boundingBox.max.z - boundingBox.min.z,
+    const boundingBoxEdge = Math.sqrt(
+      Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
+        Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
+        Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
     );
-    const boundingBoxEdge = Math.sqrt(3) * maxEdgeLenghth;
-    cube.position.y = maxEdgeLenghth;
+    cube.position.y = boundingBoxEdge / 2;
 
-    if (this.#preparedConstruct?.controls) {
-      this.#preparedConstruct.controls.minDistance = boundingBoxEdge;
-    }
     this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
     this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
     this.#preparedConstruct?.basicControls.scene.add(cube);
@@ -156,24 +145,12 @@ export class StudioContainerComponent implements OnInit {
       intensity: 0.3 * Math.PI,
       position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
     });
+
     this.#preparedConstruct?.addLight('ambient', ambientLight);
     this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
     this.#preparedConstruct?.addLight('direct', directionalLight);
-    const helper1: createLightHelperReturn = ambientLight.getHelper();
-    if (helper1) {
-      this.#preparedConstruct?.basicControls.scene.add(helper1);
-    }
-    const helper2: createLightHelperReturn = hemisphereLight.getHelper();
-    if (helper2) {
-      this.#preparedConstruct?.basicControls.scene.add(helper2);
-    }
-    const helper3: createLightHelperReturn = directionalLight.getHelper();
-    if (helper3) {
-      this.#preparedConstruct?.basicControls.scene.add(helper3);
-    }
-    directionalLight.switch(true, true);
-
     this.#preparedConstruct?.deleteLight('standard');
+    this.#preparedConstruct?.switchAllLights(true, false);
 
     if (this.#preparedConstruct) {
       const cp = this.#preparedConstruct.basicControls.camera.getPosition();
@@ -184,6 +161,14 @@ export class StudioContainerComponent implements OnInit {
       this.#preparedConstruct.animate(() => {
         cube.rotation.x += 0.01;
         cube.rotation.y += 0.01;
+      });
+
+      this.#preparedConstruct.prepareOrbitControls({
+        enabled: true,
+        enablePan: false,
+        enableRotate: true,
+        enableZoom: true,
+        minDistance: boundingBoxEdge,
       });
     }
   }
@@ -198,8 +183,13 @@ export class StudioContainerComponent implements OnInit {
     console.log('createGroundFloor');
     const geometry = new THREE.PlaneGeometry(10, 10);
     geometry.rotateX(-Math.PI / 2.15);
-    const material = new THREE.MeshStandardMaterial({ color: 0x0f0f0f });
-    return new THREE.Mesh(geometry, material);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x0f0f1f,
+      side: THREE.DoubleSide,
+    });
+    const ground = new THREE.Mesh(geometry, material);
+    ground.receiveShadow = true;
+    return ground;
   }
 
   /**

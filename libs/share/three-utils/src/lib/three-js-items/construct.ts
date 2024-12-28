@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three-stdlib';
 import { Camera, cameraTypeEnum } from './camera';
-import { Light, lightTypeEnum } from './light';
+import { createLightHelperReturn, Light, lightTypeEnum } from './light';
 
 export const defaultLightColor = 0xffffff;
 export const defaultLightIntensity = 1;
@@ -22,6 +22,18 @@ export interface preparedConstructReturn {
   animate: (pfkt: () => void) => void;
   addLight: (key: string, light: Light) => void;
   deleteLight: (key: string) => void;
+  switchAllLights: (on: boolean, onHelper: boolean) => void;
+  prepareOrbitControls: (orbitConfig: prepareOrbitControls) => void;
+  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
+}
+
+export interface prepareOrbitControls {
+  enableZoom: boolean;
+  enablePan: boolean;
+  enableRotate: boolean;
+  enabled: boolean;
+  minDistance?: number;
+  maxDistance?: number;
 }
 
 /**
@@ -59,14 +71,12 @@ export const construct = (width: number, height: number): constructReturn => {
 };
 
 /**
- * Prepares a 3D construct for rendering within a given canvas element. This function initializes a WebGL renderer,
- * attaches it to the canvas, and provides utility methods for managing lights and animation within the scene.
+ * Prepares the necessary components for rendering a 3D scene, including the setup
+ * of a WebGL renderer, cameras, lights, and controls.
  *
- * @param {constructReturn} construct - The construct object containing the scene, camera, and lights setup.
- * @param {HTMLCanvasElement | undefined} canvasElement - The HTML canvas element where the construct will be rendered.
- * If undefined, the function will return `undefined`.
- * @returns {preparedConstructReturn | undefined} Returns an object containing the prepared construct, renderer,
- * utility methods for light management and animations, or `undefined` if the canvas element is not provided.
+ * @param {constructReturn} construct - An object containing the 3D scene, camera, lights, and other configurations.
+ * @param {HTMLCanvasElement | undefined} canvasElement - The HTML canvas element where the 3D scene will be rendered.
+ * @returns {preparedConstructReturn | undefined} Returns an object containing the renderer, controls, and utility methods for managing the scene, or undefined if no canvas element is provided.
  */
 export const prepareConstruct = (
   construct: constructReturn,
@@ -80,13 +90,16 @@ export const prepareConstruct = (
   let controls: OrbitControls | undefined;
 
   renderer.setSize(canvasElement.width, canvasElement.height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
   if (construct.camera.camera instanceof THREE.PerspectiveCamera) {
     controls = new OrbitControls(construct.camera.camera, renderer.domElement);
     controls.target.set(0, 0, 0);
-    controls.enableZoom = true;
-    controls.maxPolarAngle = Infinity;
-    controls.enabled = true;
-    controls.enablePan = true;
+    controls.enabled = false;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.enableRotate = false;
   }
   canvasElement.appendChild(renderer.domElement);
 
@@ -122,6 +135,40 @@ export const prepareConstruct = (
   };
 
   /**
+   * Configures and updates the OrbitControls settings based on the provided configuration.
+   *
+   * @param {Object} orbitConfig - The configuration object for OrbitControls.
+   * @param {boolean} orbitConfig.enableZoom - Specifies whether zooming is enabled.
+   * @param {boolean} orbitConfig.enablePan - Specifies whether panning is enabled.
+   * @param {boolean} orbitConfig.enableRotate - Specifies whether rotation is enabled.
+   * @param {boolean} orbitConfig.enabled - Specifies whether the OrbitControls are active.
+   * @returns {void}
+   */
+  const prepareOrbitControls = (orbitConfig: prepareOrbitControls): void => {
+    if (controls) {
+      controls.enableZoom = orbitConfig.enableZoom;
+      controls.enablePan = orbitConfig.enablePan;
+      controls.enableRotate = orbitConfig.enableRotate;
+      controls.enabled = orbitConfig.enabled;
+      controls.minDistance = orbitConfig.minDistance ?? 0;
+      controls.maxDistance = orbitConfig.maxDistance ?? Infinity;
+    }
+  };
+
+  /**
+   * Switches all lights in the construct on or off.
+   *
+   * @param {boolean} on - A boolean value indicating whether the lights should be switched on (`true`) or off (`false`).
+   * @param onHelper - A boolean value indicating whether the helper lights should be switched on (`true`) or off (`false`).
+   * @returns {void} This function does not return any value.
+   */
+  const switchAllLights = (on: boolean, onHelper: boolean): void => {
+    for (const l of construct.lights.values()) {
+      l.switch(on, onHelper);
+    }
+  };
+
+  /**
    * Adds a light source to the construct's scene and initializes its state.
    *
    * @param {string} key - A unique identifier for the light to be added.
@@ -136,6 +183,8 @@ export const prepareConstruct = (
   const addLight = (key: string, light: Light): void => {
     construct.lights.set(key, light);
     light.switch(false, false);
+    const helper: createLightHelperReturn = light.getHelper();
+    if (helper) construct.scene.add(helper);
     construct.scene.add(light.getLight() ?? new THREE.AmbientLight(defaultLightColor, defaultLightIntensity));
   };
 
@@ -158,6 +207,18 @@ export const prepareConstruct = (
     }
   };
 
+  /**
+   * Updates the dimensions of the camera's viewport and adjusts the renderer size.
+   *
+   * @param {number} newWidth - The new width of the camera's viewport.
+   * @param {number} newHeight - The new height of the camera's viewport.
+   * @returns {void}
+   */
+  const updateCameraWindowSize = (newWidth: number, newHeight: number): void => {
+    construct.camera.updateCameraWindowSize(newWidth, newHeight);
+    renderer.setSize(newWidth, newHeight);
+  };
+
   return {
     basicControls: construct,
     controls,
@@ -165,5 +226,8 @@ export const prepareConstruct = (
     addLight,
     deleteLight,
     animate,
+    switchAllLights,
+    prepareOrbitControls,
+    updateCameraWindowSize,
   };
 };
