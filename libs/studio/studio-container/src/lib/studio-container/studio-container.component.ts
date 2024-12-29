@@ -37,7 +37,7 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {void} Does not return a value.
    */
-  async ngOnInit(): void {
+  ngOnInit(): void {
     if (!this.canvasElement()) {
       return;
     }
@@ -45,7 +45,7 @@ export class StudioContainerComponent implements OnInit {
     const constConstruct = construct(1, 1);
     this.#preparedConstruct = prepareConstruct(constConstruct, this.canvasElement()?.nativeElement);
     this.#updateRendererSize();
-    await this.#testFunction();
+    this.#testFunction();
   }
 
   /**
@@ -105,70 +105,61 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {Promise<void>} A Promise that resolves when the function completes.
    */
-  async #testFunction(): Promise<void> {
+  #testFunction(): void {
     console.log('testFunction');
 
-    let boundingBoxEdge = 1;
-    const content = await this.#getContentTest(true);
-    if (content) {
-      const boundingBox = new THREE.Box3().setFromObject(content);
-      boundingBoxEdge = Math.sqrt(
-        Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
-          Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
-          Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
-      );
-      content.position.y = boundingBoxEdge / 2;
+    const boundingBoxEdge = 1;
+    this.#preparedConstruct?.addGlb('cube', undefined, 'cube/viewCube.glb');
+    this.#preparedConstruct?.addContent('ground', this.#createGroundFloor());
 
-      this.#preparedConstruct?.basicControls.scene.add(this.#createGroundFloor());
-      this.#preparedConstruct?.basicControls.scene.add(this.#greateViewSphere(boundingBoxEdge));
-      this.#preparedConstruct?.basicControls.scene.add(content);
+    const ambientLight = new Light({
+      type: lightTypeEnum.Ambient,
+      color: 0x7f7e80,
+      intensity: 0.7 * Math.PI,
+      position: [0, 0, 0],
+    });
+    const hemisphereLight = new Light({
+      type: lightTypeEnum.Hemisphere,
+      color: 0xfbfcff,
+      skyColor: 0xfbfcff,
+      groundColor: 0x7e7a80,
+      intensity: 0.32 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
+    });
+    const directionalLight = new Light({
+      type: lightTypeEnum.Directional,
+      color: 0xffffff,
+      intensity: 0.3 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
+    });
 
-      const ambientLight = new Light({
-        type: lightTypeEnum.Ambient,
-        color: 0x7f7e80,
-        intensity: 0.7 * Math.PI,
-        position: [0, 0, 0],
+    this.#preparedConstruct?.addLight('ambient', ambientLight);
+    this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
+    this.#preparedConstruct?.addLight('direct', directionalLight);
+    this.#preparedConstruct?.deleteLight('standard');
+    this.#preparedConstruct?.switchAllLights(true, false);
+
+    if (this.#preparedConstruct) {
+      const cp = this.#preparedConstruct.basicControls.camera.getPosition();
+      cp.z = 5;
+      this.#preparedConstruct.basicControls.camera.setPosition(cp);
+    }
+    if (this.#preparedConstruct) {
+      this.#preparedConstruct.prepareOrbitControls({
+        enabled: true,
+        enablePan: false,
+        enableRotate: true,
+        enableZoom: true,
+        minDistance: boundingBoxEdge,
       });
-      const hemisphereLight = new Light({
-        type: lightTypeEnum.Hemisphere,
-        color: 0xfbfcff,
-        skyColor: 0xfbfcff,
-        groundColor: 0x7e7a80,
-        intensity: 0.32 * Math.PI,
-        position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
-      });
-      const directionalLight = new Light({
-        type: lightTypeEnum.Directional,
-        color: 0xffffff,
-        intensity: 0.3 * Math.PI,
-        position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
-      });
 
-      this.#preparedConstruct?.addLight('ambient', ambientLight);
-      this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
-      this.#preparedConstruct?.addLight('direct', directionalLight);
-      this.#preparedConstruct?.deleteLight('standard');
-      this.#preparedConstruct?.switchAllLights(true, false);
-
-      if (this.#preparedConstruct) {
-        const cp = this.#preparedConstruct.basicControls.camera.getPosition();
-        cp.z = 5;
-        this.#preparedConstruct.basicControls.camera.setPosition(cp);
-      }
-      if (this.#preparedConstruct) {
-        this.#preparedConstruct.animate(() => {
+      this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
+        const content = this.#preparedConstruct?.getContent('cube');
+        if (content) {
           content.rotation.x += 0.01;
           content.rotation.y += 0.01;
-        });
-
-        this.#preparedConstruct.prepareOrbitControls({
-          enabled: true,
-          enablePan: false,
-          enableRotate: true,
-          enableZoom: true,
-          minDistance: boundingBoxEdge,
-        });
-      }
+        }
+      });
     }
   }
 
@@ -201,35 +192,18 @@ export class StudioContainerComponent implements OnInit {
    * Creates and returns a ground floor mesh object using THREE.js.
    * The ground floor is represented as a plane geometry with a standard material.
    *
-   * @returns {THREE.Mesh} A mesh object representing the ground floor.
+   * @returns {THREE.Group} A group object representing the ground floor.
    */
-  #createGroundFloor(): THREE.Mesh {
+  #createGroundFloor(): THREE.Group {
     console.log('createGroundFloor');
     const geometry = new THREE.PlaneGeometry(10, 10);
-    geometry.rotateX(-Math.PI / 2.15);
+    geometry.rotateX(-Math.PI / 2); // .15);
     const material = new THREE.MeshStandardMaterial({
       color: 0x0f0f1f,
       side: THREE.DoubleSide,
     });
     const ground = new THREE.Mesh(geometry, material);
     ground.receiveShadow = true;
-    return ground;
-  }
-
-  /**
-   * Creates a 3D view sphere using a box geometry with edges highlighted.
-   *
-   * @param {number} edgeLength - The length of the edges of the box geometry.
-   * @returns {THREE.LineSegments} A LineSegments object representing the geometry with highlighted edges.
-   */
-  #greateViewSphere(edgeLength: number): THREE.LineSegments {
-    console.log('greateViewSphere');
-    const geometry = new THREE.BoxGeometry(edgeLength, edgeLength, edgeLength);
-    const edges = new THREE.EdgesGeometry(geometry);
-    const material = new THREE.LineBasicMaterial({ color: 0xffff00 });
-    const lines = new THREE.LineSegments(edges, material);
-    lines.translateY(edgeLength / 2);
-    lines.rotateX(-Math.PI / 2.15);
-    return lines;
+    return new THREE.Group().add(ground);
   }
 }
