@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
-import { glbLoader, preparedSceneReturn } from 'three-utils';
+import { glbLoader, preparedSceneReturn, traverseGroup } from 'three-utils';
+import { v4 } from 'uuid';
 
 /**
  * Constructs and prepares a cube with a 3D scene, camera, lighting, and interaction methods.
@@ -9,17 +10,15 @@ import { glbLoader, preparedSceneReturn } from 'three-utils';
  * It implements necessary utilities, including lighting, camera setup, and the ability to animate,
  * update the viewport, and toggle visibility of the cube.
  *
- * @param material - The material to apply to the cube.
- * @param scene
  * @returns {preparedSceneReturn} An object containing methods for animating the cube,
  * changing its visibility, and updating the camera window size:
  * - `animate`: A method to synchronize the camera's orientation with the cube.
  * - `visible`: A method to set the visibility of the cube.
  * - `updateCameraWindowSize`: A method to adjust the camera's dimensions based on given viewport parameters.
  */
-export const cube = (material: THREE.MeshStandardMaterial, scene: THREE.Scene | undefined): preparedSceneReturn => {
+export const cube = async (): Promise<preparedSceneReturn> => {
   const cube: THREE.Group = new THREE.Group();
-  const cubeScene: THREE.Scene = scene?.clone() ?? new THREE.Scene();
+  const name = v4();
 
   /**
    * A function responsible for loading and attaching a GLB (GL Transmission Format Binary) file to a predefined 3D scene setup.
@@ -34,21 +33,13 @@ export const cube = (material: THREE.MeshStandardMaterial, scene: THREE.Scene | 
    *
    * Note that this function does not return any value.
    */
-  const glb = (): void => {
-    void glbLoader(undefined, 'cube/viewCube.glb').then((gltf: GLTF | undefined) => {
+  const glb = async (): Promise<void> => {
+    await glbLoader(undefined, 'cube/viewCube.glb').then((gltf: GLTF | undefined) => {
       if (gltf?.scene) {
-        gltf.scene.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            const m = child as THREE.Mesh;
-            m.material = new THREE.MeshStandardMaterial({
-              color: material.color,
-              roughness: material.roughness,
-              metalness: material.metalness,
-            });
-          }
-        });
         cube.add(gltf.scene);
-        cubeScene.add(cube);
+        cube.name = name;
+
+        // setMaterial(new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5, metalness: 0.5 }));
       }
     });
   };
@@ -67,13 +58,33 @@ export const cube = (material: THREE.MeshStandardMaterial, scene: THREE.Scene | 
   /**
    * A function that manages the rendering process for a 3D scene.
    *
-   * @param {THREE.WebGLRenderer} renderer - The WebGL renderer responsible for rendering the scene.
-   * @param {THREE.Scene} _scene - The main scene to be rendered (unused in this function).
-   * @param {THREE.Camera} camera - The main camera for the scene (unused in this function).
+   * @param {THREE.WebGLRenderer} _renderer - The WebGL renderer responsible for rendering the scene.
+   * @param {THREE.Scene} scene - The main scene to be rendered (unused in this function).
+   * @param {THREE.Camera} _camera - The main camera for the scene (unused in this function).
    * @returns {void} This function does not return a value.
    */
-  const animate = (renderer: THREE.WebGLRenderer, _scene: THREE.Scene, camera: THREE.Camera): void => {
-    renderer.render(cubeScene, camera);
+  const animate = (_renderer: THREE.WebGLRenderer, scene: THREE.Scene, _camera: THREE.Camera): void => {
+    addContent(scene);
+  };
+
+  /**
+   * Adds a cube to the given THREE.Scene if it is not already present.
+   *
+   * @param {THREE.Scene} scene - The scene to which the cube will be added.
+   * @returns {void}
+   */
+  const addContent = (scene: THREE.Scene): void => {
+    let found = false;
+    scene.traverse((child) => {
+      if (child.name === cube.name) {
+        found = true;
+        return;
+      }
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!found) {
+      scene.add(cube);
+    }
   };
 
   /**
@@ -93,9 +104,9 @@ export const cube = (material: THREE.MeshStandardMaterial, scene: THREE.Scene | 
    * @returns {void}
    */
   const setMaterial = (material: THREE.MeshStandardMaterial): void => {
-    console.log('setMaterial -- ', cube);
-    cube.traverse((child) => {
+    traverseGroup(cube, (child) => {
       if (child instanceof THREE.Mesh) {
+        console.log('setMaterial -- CC', child);
         const m = child as THREE.Mesh;
         m.material = new THREE.MeshStandardMaterial({
           color: material.color,
@@ -117,9 +128,9 @@ export const cube = (material: THREE.MeshStandardMaterial, scene: THREE.Scene | 
     console.log('anylyseScene -- ');
   };
 
-  glb();
+  await glb();
 
-  console.log('cube-Scene -- ', cube, cubeScene);
+  console.log('cube-Scene -- ', cube);
   return {
     animate,
     visible,

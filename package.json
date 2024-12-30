@@ -55,6 +55,8 @@
     "rxjs": "^7.8.0",
     "three": "0.171.0",
     "three-stdlib": "2.35.2",
+    "uuid": "11.0.3",
+    "crypto-js": "4.2.0",
     "zod": "3.23.8",
     "nestjs-zod": "4.2.0",
     "zone.js": "~0.14.3"

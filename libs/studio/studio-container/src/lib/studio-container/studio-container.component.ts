@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import {
+  construct,
+  Light,
+  lightTypeEnum,
+  prepareConstruct,
+  preparedConstructReturn,
+  preparedSceneReturn
+} from 'three-utils';
 import { cube } from '../prepared-scenes/cube';
 import { constructRotationCube } from '../prepared-scenes/rotation-cube';
 
@@ -46,7 +53,7 @@ export class StudioContainerComponent implements OnInit {
     const constConstruct = construct(1, 1);
     this.#preparedConstruct = prepareConstruct(constConstruct, this.canvasElement()?.nativeElement);
     this.#updateRendererSize();
-    this.#testFunction();
+    void this.#testFunction();
   }
 
   /**
@@ -98,13 +105,19 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {Promise<void>} A Promise that resolves when the function completes.
    */
-  #testFunction(): void {
+  async #testFunction(): Promise<void> {
     console.log('testFunction');
 
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
-    const cubeScene = cube(
-      new THREE.MeshStandardMaterial({ color: 0xafbb1c, roughness: 0.5, metalness: 0.5 }),
-      this.#preparedConstruct?.basicControls.scene,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const cubeScene: preparedSceneReturn = await cube();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    cubeScene.setMaterial(
+      new THREE.MeshStandardMaterial({
+        color: 0xafbb1c,
+        roughness: 0.5,
+        metalness: 0.5,
+      }),
     );
     this.#preparedConstruct?.addConstructedScene('cube-glb', cubeScene);
 
@@ -112,17 +125,17 @@ export class StudioContainerComponent implements OnInit {
 
     const ambientLight = new Light({
       type: lightTypeEnum.Ambient,
-      color: 0xffffff, // 0x7f7e80,
-      intensity: 1, // 0.7 * Math.PI,
-      position: [0, 50, 0],
+      color: 0x7f7e80,
+      intensity: 0.7 * Math.PI,
+      position: [0, 0, 0],
     });
     const hemisphereLight = new Light({
       type: lightTypeEnum.Hemisphere,
-      color: 0xffffbb,
-      skyColor: 0xffffbb,
-      groundColor: 0x080820,
-      intensity: 1, //0.32 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
+      color: 0xfbfcff,
+      skyColor: 0xfbfcff,
+      groundColor: 0x7e7a80,
+      intensity: 0.32 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
     });
     const directionalLight = new Light({
       type: lightTypeEnum.Directional,
@@ -131,9 +144,9 @@ export class StudioContainerComponent implements OnInit {
       position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
     });
 
-    // this.#preparedConstruct?.addLight('ambient', ambientLight);
+    this.#preparedConstruct?.addLight('ambient', ambientLight);
     this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
-    // this.#preparedConstruct?.addLight('direct', directionalLight);
+    this.#preparedConstruct?.addLight('direct', directionalLight);
     // this.#preparedConstruct?.deleteLight('standard');
     this.#preparedConstruct?.switchAllLights(true, true);
 
