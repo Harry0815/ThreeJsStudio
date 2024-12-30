@@ -454,18 +454,18 @@ export class Light {
    * @returns {createLightHelperReturn} A helper object for the light, or `undefined` if the light type is unsupported or undefined.
    */
   readonly #createHelper = (): createLightHelperReturn => {
-    if (this.#light instanceof THREE.DirectionalLight) {
-      return new THREE.DirectionalLightHelper(this.#light, 0.2);
-    }
-    if (this.#light instanceof THREE.PointLight) {
-      return new THREE.PointLightHelper(this.#light);
-    }
-    if (this.#light instanceof THREE.SpotLight) {
-      return new THREE.SpotLightHelper(this.#light);
-    }
-    if (this.#light instanceof THREE.HemisphereLight) {
-      return new THREE.HemisphereLightHelper(this.#light, 5);
-    }
+    // if (this.#light instanceof THREE.DirectionalLight) {
+    //   return new THREE.DirectionalLightHelper(this.#light, 0.2);
+    // }
+    // if (this.#light instanceof THREE.PointLight) {
+    //   return new THREE.PointLightHelper(this.#light);
+    // }
+    // if (this.#light instanceof THREE.SpotLight) {
+    //   return new THREE.SpotLightHelper(this.#light);
+    // }
+    // if (this.#light instanceof THREE.HemisphereLight) {
+    //   return new THREE.HemisphereLightHelper(this.#light, 5);
+    // }
     return undefined;
   };
 }

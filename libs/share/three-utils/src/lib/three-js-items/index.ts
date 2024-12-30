@@ -3,3 +3,4 @@ export * from './camera';
 export * from './construct';
 export * from './loader';
 export * from './text';
+export * from './share';

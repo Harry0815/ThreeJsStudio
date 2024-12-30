@@ -1,16 +1,9 @@
 import * as THREE from 'three';
 import { GLTF, OrbitControls } from 'three-stdlib';
 import { Camera, cameraTypeEnum } from './camera';
-import { createLightHelperReturn, Light, lightTypeEnum } from './light';
+import { createLightHelperReturn, createLightReturn, Light, lightTypeEnum } from './light';
 import { glbLoader } from './loader';
-import { createTextLabel } from './text';
-
-export const defaultLightColor = 0xffffff;
-export const defaultLightIntensity = 1;
-const red = 0xff0000;
-const green = 0x00ff00;
-const blue = 0x0000ff;
-const zeroPosition = new THREE.Vector3(0, 0, 0);
+import { zeroPosition } from './share';
 
 /**
  * Construct a scene, camera, light, and renderer
@@ -39,14 +32,11 @@ export interface preparedConstructReturn {
   addContent: (key: string, content: THREE.Group) => void;
   getContent: (key: string) => THREE.Group | undefined;
   deleteContent: (key: string) => void;
+  addConstructedScene: (key: string, scene: preparedSceneReturn) => void;
+  deleteConstructedScene: (key: string) => void;
+  getConstructedScene: (key: string) => preparedSceneReturn | undefined;
 
   addGlb: (name: string, contentBase64: string | undefined, path: string) => void;
-}
-
-export interface preparedSceneReturn {
-  animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
-  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
-  visible: (vis: boolean) => void;
 }
 
 /**
@@ -70,6 +60,8 @@ export interface prepareOrbitControls {
 export const construct = (width: number, height: number): constructReturn => {
   // Create a new scene
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x7f7e80);
+
   // Create a new camera
   const camera = new Camera({
     type: cameraTypeEnum.PERSPECTIVE,
@@ -85,17 +77,18 @@ export const construct = (width: number, height: number): constructReturn => {
     type: lightTypeEnum.Ambient,
     color: 0x7f7e80,
     skyColor: 0x7f7e80,
-    groundColor: 0xffffff,
-    intensity: 0.2,
+    groundColor: 0x0f0f0f,
+    intensity: 1,
     position: [0, 0, 0],
     width: 0.2,
     height: 0.2,
   });
-  standardLight.setLightPosition(zeroPosition.clone());
+
+  standardLight.setLightPosition(new THREE.Vector3(zeroPosition.x, zeroPosition.y, zeroPosition.z));
   lights.set('standard', standardLight);
+
   // Create a new content
   const content = new Map<string, THREE.Group>();
-
   return { scene, camera, lights, content };
 };
 
@@ -115,34 +108,64 @@ export const prepareConstruct = (
     return undefined;
   }
 
+  const constructedScenes: Map<string, preparedSceneReturn> = new Map<string, preparedSceneReturn>();
+
   const renderer = new THREE.WebGLRenderer();
   let controls: OrbitControls | undefined;
-
   renderer.setSize(canvasElement.width, canvasElement.height);
+
   // renderer.shadowMap.enabled = true;
-  // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // renderer.shadowMap.type = THREE.PCFShadowMap;
 
   // Add OrbitControls if the camera is a PerspectiveCamera
   if (construct.camera.camera instanceof THREE.PerspectiveCamera) {
     controls = new OrbitControls(construct.camera.camera, renderer.domElement);
-    controls.target = zeroPosition.clone(); // .set(0, 0, 0);
+    controls.target.set(0, 0, 0);
     controls.enabled = false;
     controls.enableZoom = false;
     controls.enablePan = false;
     controls.enableRotate = false;
   }
-  // Construct a rotation cube
-  const rotationCube = constructRotationCube(renderer);
-  rotationCube.visible(true);
-
   // Append the renderer to the canvas element
   canvasElement.appendChild(renderer.domElement);
   // Add the standard light to the scene
   for (const l of construct.lights.values()) {
-    if (l.getLight()) {
-      construct.scene.add(l.getLight() as THREE.Light);
+    const light = l.getLight();
+    if (light) {
+      construct.scene.add(light); //  as THREE.Light);
     }
   }
+
+  /**
+   * Adds a constructed scene to the collection of constructed scenes.
+   *
+   * @param {string} key - A unique identifier for the constructed scene.
+   * @param {preparedSceneReturn} scene - The prepared scene object to be added.
+   * @returns {void}
+   */
+  const addConstructedScene = (key: string, scene: preparedSceneReturn): void => {
+    constructedScenes.set(key, scene);
+  };
+
+  /**
+   * Retrieves a pre-constructed scene from the constructedScenes map using the provided key.
+   *
+   * @param {string} key - The unique identifier used to retrieve the corresponding constructed scene.
+   * @returns {preparedSceneReturn | undefined} The constructed scene associated with the given key, or undefined if the key does not exist in the map.
+   */
+  const getConstructedScene = (key: string): preparedSceneReturn | undefined => {
+    return constructedScenes.get(key);
+  };
+
+  /**
+   * Deletes a constructed scene from the collection of constructed scenes.
+   *
+   * @param {string} key - The unique identifier for the constructed scene to be removed.
+   * @returns {void}
+   */
+  const deleteConstructedScene = (key: string): void => {
+    constructedScenes.delete(key);
+  };
 
   /**
    * A function that continuously animates a given callback function (`pfkt`)
@@ -170,8 +193,10 @@ export const prepareConstruct = (
         renderer.render(construct.scene, construct.camera.camera);
         renderer.clearDepth();
 
-        // Update the controls if available
-        rotationCube.animate(renderer, construct.scene, construct.camera.camera);
+        for (const l of constructedScenes.values()) {
+          // Update the controls if available
+          l.animate(renderer, construct.scene, construct.camera.camera);
+        }
         // Call the provided callback function with the renderer, scene, and camera
         pfkt(renderer, construct.scene, construct.camera.camera);
       }
@@ -227,10 +252,17 @@ export const prepareConstruct = (
    */
   const addLight = (key: string, light: Light): void => {
     construct.lights.set(key, light);
-    light.switch(false, false);
+    // light.switch(false, false);
     const helper: createLightHelperReturn = light.getHelper();
-    if (helper) construct.scene.add(helper);
-    construct.scene.add(light.getLight() ?? new THREE.AmbientLight(defaultLightColor, defaultLightIntensity));
+    const lightObj: createLightReturn = light.getLight();
+
+    // if (helper) construct.scene.add(helper);
+    if (lightObj) {
+      construct.scene.add(
+        lightObj, // light.getLight()  // ?? new THREE.AmbientLight(defaultLightColor as number, defaultLightIntensity as number),
+      );
+    }
+    console.log('addLight', light, helper, construct.scene);
   };
 
   /**
@@ -313,7 +345,9 @@ export const prepareConstruct = (
    */
   const updateCameraWindowSize = (newWidth: number, newHeight: number): void => {
     construct.camera.updateCameraWindowSize(newWidth, newHeight);
-    rotationCube.updateCameraWindowSize(newWidth, newHeight);
+    for (const l of constructedScenes.values()) {
+      l.updateCameraWindowSize(newWidth, newHeight);
+    }
     renderer.setSize(newWidth, newHeight);
   };
 
@@ -328,6 +362,17 @@ export const prepareConstruct = (
     void glbLoader(contentBase64, path).then((gltf: GLTF | undefined) => {
       if (gltf?.scene) {
         const contentGroup = new THREE.Group();
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            const m = child as THREE.Mesh;
+            m.material = new THREE.MeshStandardMaterial({
+              color: 0x01a1a1,
+              roughness: 5,
+              metalness: 0.2,
+            });
+          }
+        });
+
         contentGroup.add(gltf.scene);
         contentGroup.name = name;
         addContent(name, contentGroup);
@@ -376,8 +421,19 @@ export const prepareConstruct = (
     prepareOrbitControls,
     updateCameraWindowSize,
     addGlb,
+    addConstructedScene,
+    getConstructedScene,
+    deleteConstructedScene,
   };
 };
+
+export interface preparedSceneReturn {
+  animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
+  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
+  visible: (vis: boolean) => void;
+  setMaterial: (_material: THREE.MeshStandardMaterial) => void;
+  anylyseScene: () => void;
+}
 
 const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
   /**
@@ -413,182 +469,33 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     console.log('visible -- ');
   };
 
+  /**
+   * Sets the material for an object.
+   *
+   * @param {THREE.MeshStandardMaterial} _material - The material to apply.
+   * @returns {void}
+   */
+  const setMaterial = (_material: THREE.MeshStandardMaterial): void => {
+    console.log('setMaterial -- ');
+  };
+
+  /**
+   * Analyzes the current scene or context of the application.
+   * This function executes the necessary logic to evaluate and log details about the scene.
+   *
+   * The function does not return any value and operates entirely through side effects,
+   * such as logging information to the console.
+   */
+  const anylyseScene = (): void => {
+    console.log('anylyseScene -- ');
+  };
+
   console.log('constructItem -- ');
   return {
     animate,
     visible,
     updateCameraWindowSize,
-  };
-};
-
-/**
- * Constructs a rotation-enabled 3D cube with visual indications for its orientation in 3D space.
- *
- * @param _renderer - The WebGLRenderer instance used for rendering the 3D cube scene.
- * @returns {Object} An object containing two methods:
- *   - `animate`: A method to handle the rendering of the cube's scene using the orthographic camera.
- *   - `updateCameraWindowSize`: A method to update the dimensions of the orthographic camera's viewport based on new width and height.
- *
- * This function initializes the 3D cube by loading a model, configuring its dimensions,
- * adding visual axis indicators, and setting up a camera and scene for rendering.
- */
-const constructRotationCube = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
-  const groupCube: THREE.Group = new THREE.Group();
-  const cube: THREE.Group = new THREE.Group();
-  const cubeScene: THREE.Scene = new THREE.Scene();
-  const cubeCamera: THREE.OrthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
-
-  const standardLight = new Light({
-    type: lightTypeEnum.Directional,
-    color: 0x7f7e80,
-    skyColor: 0x7f7e80,
-    groundColor: 0xffffff,
-    intensity: 0.7,
-    position: [0, 0, 0],
-    width: 0.2,
-    height: 0.2,
-  });
-  standardLight.setLightPosition(new THREE.Vector3(-1, 1, 1));
-  cubeScene.add(standardLight.getLight() as THREE.Light);
-  standardLight.setLightPosition(new THREE.Vector3(-1, -1, 1));
-  cubeScene.add(standardLight.getLight() as THREE.Light);
-  standardLight.setLightPosition(new THREE.Vector3(1, -1, 1));
-  cubeScene.add(standardLight.getLight() as THREE.Light);
-
-  const glb = (): void => {
-    void glbLoader(undefined, 'cube/viewCube.glb').then((gltf: GLTF | undefined) => {
-      if (gltf?.scene) {
-        cubeCamera.position.z = 100;
-        cubeCamera.zoom = 1;
-
-        // cubeScene.add(cubeCamera);
-        cubeScene.add(groupCube);
-
-        gltf.scene.position.copy(zeroPosition.clone());
-        cube.add(gltf.scene);
-
-        // cube is 50x50x50 (1 scale 50)
-        cube.scale.set(50, 50, 50);
-        groupCube.add(cube);
-        finishRotationCube(groupCube);
-      }
-    });
-  };
-
-  /**
-   * Updates the dimensions of the camera's viewport and adjusts the renderer size.
-   *
-   * @param {number} newWidth - The new width of the camera's viewport.
-   * @param {number} newHeight - The new height of the camera's viewport.
-   * @returns {void}
-   */
-  const updateCameraWindowSize = (newWidth: number, newHeight: number): void => {
-    console.log('updateCameraWindowSize --', newWidth, newHeight);
-
-    cubeCamera.left = -65;
-    cubeCamera.right = newWidth;
-    cubeCamera.top = newHeight;
-    cubeCamera.bottom = -65;
-    cubeCamera.updateProjectionMatrix();
-  };
-
-  /**
-   * Adds visual indicators to a 3D cube-like object representing its orientation in 3D space.
-   *
-   * This function creates and adds arrow helpers to the provided 3D group object,
-   * representing the X, Y, and Z axes. Each axis has a specific length, color,
-   * and arrowhead size. The origin is set to the minimum bounds of the cube's
-   * bounding box.
-   *
-   * @param {THREE.Group} qube - The 3D group object (typically a cube) to which the
-   * orientation indicators are added. The function operates on this object.
-   *
-   * @returns {void}
-   */
-  const finishRotationCube = (qube: THREE.Group): void => {
-    console.log('finishRotationCube');
-
-    const boundingBox = new THREE.Box3().setFromObject(qube);
-    const sizeBox = new THREE.Vector3();
-    boundingBox.getSize(sizeBox);
-    const size = sizeBox.multiplyScalar(2);
-
-    const center = new THREE.Vector3();
-    boundingBox.getCenter(center);
-
-    const origin = zeroPosition.clone().copy(boundingBox.min);
-    const headLength = size.x * 0.86 * 0.2;
-    const headWidth = 0.4 * headLength;
-
-    const xA = new THREE.ArrowHelper(
-      new THREE.Vector3(1, 0, 0).normalize(),
-      origin,
-      size.x * 0.86,
-      red,
-      headLength,
-      headWidth,
-    );
-    const yA = new THREE.ArrowHelper(
-      new THREE.Vector3(0, 1, 0).normalize(),
-      origin,
-      size.y * 0.86,
-      green,
-      headLength,
-      headWidth,
-    );
-    const zA = new THREE.ArrowHelper(
-      new THREE.Vector3(0, 0, 1).normalize(),
-      origin,
-      size.z * 0.86,
-      blue,
-      headLength,
-      headWidth,
-    );
-    qube.add(yA);
-    qube.add(xA);
-    qube.add(zA);
-
-    createTextLabel('helvetiker_regular.typeface.json', 'X', new THREE.Vector3(45, -20, -20), red, qube);
-    createTextLabel('helvetiker_regular.typeface.json', 'Y', new THREE.Vector3(-20, 45, -20), green, qube);
-    createTextLabel('helvetiker_regular.typeface.json', 'Z', new THREE.Vector3(-20, -20, 50), blue, qube);
-  };
-
-  /**
-   * A function that manages the rendering process for a 3D scene.
-   *
-   * @param {THREE.WebGLRenderer} renderer - The WebGL renderer responsible for rendering the scene.
-   * @param {THREE.Scene} _scene - The main scene to be rendered (unused in this function).
-   * @param {THREE.Camera} camera - The main camera for the scene (unused in this function).
-   * @returns {void} This function does not return a value.
-   */
-  const animate = (renderer: THREE.WebGLRenderer, _scene: THREE.Scene, camera: THREE.Camera): void => {
-    const quater = new THREE.Quaternion(
-      camera.quaternion.x,
-      camera.quaternion.y,
-      camera.quaternion.z,
-      camera.quaternion.w,
-    );
-    quater.invert();
-    groupCube.setRotationFromQuaternion(quater);
-    renderer.render(cubeScene, cubeCamera);
-  };
-
-  /**
-   * Sets the visibility of the rotation cube.
-   *
-   * @param {boolean} vis - A boolean value indicating whether the cube should be visible (`true`) or hidden (`false`).
-   * @returns {void} This function does not return any value.
-   */
-  const visible = (vis: boolean): void => {
-    groupCube.visible = vis;
-  };
-
-  glb();
-
-  console.log('cubeScene -- ', groupCube);
-  return {
-    animate,
-    visible,
-    updateCameraWindowSize,
+    setMaterial,
+    anylyseScene,
   };
 };

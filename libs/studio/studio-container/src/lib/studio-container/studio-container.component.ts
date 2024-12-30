@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import * as THREE from 'three';
-import { GLTF } from 'three-stdlib';
-import { construct, glbLoader, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import { construct, Light, lightTypeEnum, prepareConstruct, preparedConstructReturn } from 'three-utils';
+import { cube } from '../prepared-scenes/cube';
+import { constructRotationCube } from '../prepared-scenes/rotation-cube';
 
 /**
  * Represents the container component for the studio.
@@ -67,11 +68,6 @@ export class StudioContainerComponent implements OnInit {
    * @return {void} Does not return a value.
    */
   #updateRendererSize(): void {
-    console.log(
-      'updateRendererSize',
-      this.canvasElement()?.nativeElement.clientWidth,
-      this.canvasElement()?.nativeElement.clientHeight,
-    );
     const width = this.canvasElement()?.nativeElement.clientWidth;
     const height = this.canvasElement()?.nativeElement.clientHeight;
     if (width && height) {
@@ -88,9 +84,6 @@ export class StudioContainerComponent implements OnInit {
   #updateCameraWindowSize(newWidth: number, newHeight: number): void {
     this.#rendererWidth = newWidth;
     this.#rendererHeight = newHeight;
-
-    console.log('updateCameraWindowSize', this.#rendererWidth, this.#rendererHeight);
-
     if (this.#preparedConstruct) {
       this.#preparedConstruct.updateCameraWindowSize(this.#rendererWidth, this.#rendererHeight);
     }
@@ -108,23 +101,28 @@ export class StudioContainerComponent implements OnInit {
   #testFunction(): void {
     console.log('testFunction');
 
+    this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
+    const cubeScene = cube(
+      new THREE.MeshStandardMaterial({ color: 0xafbb1c, roughness: 0.5, metalness: 0.5 }),
+      this.#preparedConstruct?.basicControls.scene,
+    );
+    this.#preparedConstruct?.addConstructedScene('cube-glb', cubeScene);
+
     const boundingBoxEdge = 1;
-    this.#preparedConstruct?.addGlb('cube', undefined, 'cube/viewCube.glb');
-    this.#preparedConstruct?.addContent('ground', this.#createGroundFloor());
 
     const ambientLight = new Light({
       type: lightTypeEnum.Ambient,
-      color: 0x7f7e80,
-      intensity: 0.7 * Math.PI,
-      position: [0, 0, 0],
+      color: 0xffffff, // 0x7f7e80,
+      intensity: 1, // 0.7 * Math.PI,
+      position: [0, 50, 0],
     });
     const hemisphereLight = new Light({
       type: lightTypeEnum.Hemisphere,
-      color: 0xfbfcff,
-      skyColor: 0xfbfcff,
-      groundColor: 0x7e7a80,
-      intensity: 0.32 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
+      color: 0xffffbb,
+      skyColor: 0xffffbb,
+      groundColor: 0x080820,
+      intensity: 1, //0.32 * Math.PI,
+      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
     });
     const directionalLight = new Light({
       type: lightTypeEnum.Directional,
@@ -133,11 +131,11 @@ export class StudioContainerComponent implements OnInit {
       position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
     });
 
-    this.#preparedConstruct?.addLight('ambient', ambientLight);
+    // this.#preparedConstruct?.addLight('ambient', ambientLight);
     this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
-    this.#preparedConstruct?.addLight('direct', directionalLight);
-    this.#preparedConstruct?.deleteLight('standard');
-    this.#preparedConstruct?.switchAllLights(true, false);
+    // this.#preparedConstruct?.addLight('direct', directionalLight);
+    // this.#preparedConstruct?.deleteLight('standard');
+    this.#preparedConstruct?.switchAllLights(true, true);
 
     if (this.#preparedConstruct) {
       const cp = this.#preparedConstruct.basicControls.camera.getPosition();
@@ -154,38 +152,10 @@ export class StudioContainerComponent implements OnInit {
       });
 
       this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
-        const content = this.#preparedConstruct?.getContent('cube');
-        if (content) {
-          content.rotation.x += 0.01;
-          content.rotation.y += 0.01;
-        }
+        // console.log('animate');
       });
     }
-  }
-
-  /**
-   * Retrieves content based on the specified parameter.
-   *
-   * @param {boolean} gltfFile - Indicates whether to load content from a GLTF file.
-   * @returns {Promise<THREE.Object3D | undefined>} - A Promise that resolves to a THREE.Object3D instance if successful,
-   * or undefined if the content cannot be retrieved.
-   */
-  async #getContentTest(gltfFile: boolean): Promise<THREE.Object3D | undefined> {
-    console.log('getContentTest');
-    if (gltfFile) {
-      const gltf: GLTF | undefined = await glbLoader(undefined, 'cube/viewCube.glb');
-      if (gltf?.scene) {
-        return gltf.scene;
-      }
-      return undefined;
-    } else {
-      const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
-      geometry.rotateX(-Math.PI / 2.15);
-      const material = new THREE.MeshStandardMaterial({ color: 0xfbaa12 });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.castShadow = true;
-      return cube;
-    }
+    this.#updateRendererSize();
   }
 
   /**
