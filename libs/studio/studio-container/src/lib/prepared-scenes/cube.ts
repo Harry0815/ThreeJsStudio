@@ -18,7 +18,9 @@ import { calculateBoundingBox, glbLoader, preparedSceneReturn, traverseGroup } f
 export const cube = async (): Promise<preparedSceneReturn> => {
   const cube: THREE.Group = new THREE.Group();
   const name = 'cube_scene';
-  let edgeLength = 0;
+  const analyseResult = {
+    boundingLength: 0,
+  };
 
   /**
    * A function responsible for loading and attaching a GLB (GL Transmission Format Binary) file to a predefined 3D scene setup.
@@ -121,19 +123,21 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    */
   const analyseScene = (): void => {
     console.log('analyseScene -- ');
-    edgeLength = calculateBoundingBox(cube);
-    console.log('analyseScene -- boundingBox', edgeLength);
+    analyseResult.boundingLength = calculateBoundingBox(cube);
+    console.log('analyseScene -- boundingBox', analyseResult.boundingLength);
   };
 
   await glb();
   analyseScene();
 
   console.log('cube-Scene -- ', cube);
+
   return {
     animate,
     visible,
     updateCameraWindowSize,
     setMaterial,
     analyseScene,
+    analyseResult: analyseResult,
   };
 };

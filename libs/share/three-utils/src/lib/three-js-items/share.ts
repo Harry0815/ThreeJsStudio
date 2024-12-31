@@ -7,6 +7,10 @@ export const green = 0x00ff00;
 export const blue = 0x0000ff;
 export const zeroPosition = { x: 0, y: 0, z: 0 };
 
+export interface interfaceAnalyseResult {
+  boundingLength: number;
+}
+
 /**
  * Calculates the length of the bounding box's diagonal edge for a given 3D object.
  *

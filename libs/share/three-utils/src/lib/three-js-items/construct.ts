@@ -3,7 +3,7 @@ import { GLTF, OrbitControls } from 'three-stdlib';
 import { Camera, cameraTypeEnum } from './camera';
 import { createLightHelperReturn, createLightReturn, Light, lightTypeEnum } from './light';
 import { glbLoader } from './loader';
-import { zeroPosition } from './share';
+import { interfaceAnalyseResult, zeroPosition } from './share';
 
 /**
  * Construct a scene, camera, light, and renderer
@@ -185,6 +185,7 @@ export const prepareConstruct = (
     const anim = (): void => {
       // Request the next frame of the animation loop
       requestAnimationFrame(anim);
+
       if (construct.camera.camera) {
         renderer.autoClear = false; // Stoppt das automatische Leeren des Canvas
         renderer.clear();
@@ -196,6 +197,7 @@ export const prepareConstruct = (
         for (const l of constructedScenes.values()) {
           // Update the controls if available
           l.animate(renderer, construct.scene, construct.camera.camera);
+          renderer.clearDepth();
         }
         // Call the provided callback function with the renderer, scene, and camera
         pfkt(renderer, construct.scene, construct.camera.camera);
@@ -433,6 +435,7 @@ export interface preparedSceneReturn {
   visible: (vis: boolean) => void;
   setMaterial: (_material: THREE.MeshStandardMaterial) => void;
   analyseScene: () => void;
+  analyseResult: interfaceAnalyseResult | undefined;
 }
 
 const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
@@ -497,5 +500,6 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     updateCameraWindowSize,
     setMaterial,
     analyseScene,
+    analyseResult: undefined,
   };
 };

@@ -7,9 +7,10 @@ import {
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
-  preparedSceneReturn,
+  preparedSceneReturn
 } from 'three-utils';
 import { cube } from '../prepared-scenes/cube';
+import { ground } from '../prepared-scenes/ground';
 import { constructRotationCube } from '../prepared-scenes/rotation-cube';
 
 /**
@@ -108,8 +109,9 @@ export class StudioContainerComponent implements OnInit {
   async #testFunction(): Promise<void> {
     console.log('testFunction');
 
+    // this.#preparedConstruct?.addConstructedScene('ground', ground());
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
-
+    this.#preparedConstruct?.addContent('ground', this.#createGroundFloor());
     const cubeScene: preparedSceneReturn = await cube();
     cubeScene.setMaterial(
       new THREE.MeshStandardMaterial({
@@ -134,7 +136,7 @@ export class StudioContainerComponent implements OnInit {
       skyColor: 0xfbfcff,
       groundColor: 0x7e7a80,
       intensity: 0.32 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, 0],
+      position: [0, boundingBoxEdge, 0],
     });
     const directionalLight = new Light({
       type: lightTypeEnum.Directional,
@@ -179,7 +181,7 @@ export class StudioContainerComponent implements OnInit {
   #createGroundFloor(): THREE.Group {
     console.log('createGroundFloor');
     const geometry = new THREE.PlaneGeometry(10, 10);
-    geometry.rotateX(-Math.PI / 2); // .15);
+    geometry.rotateX(-Math.PI / 2.15);
     const material = new THREE.MeshStandardMaterial({
       color: 0x0f0f1f,
       side: THREE.DoubleSide,

@@ -9,7 +9,7 @@ import {
   lightTypeEnum,
   preparedSceneReturn,
   red,
-  zeroPosition,
+  zeroPosition
 } from 'three-utils';
 
 /**
@@ -192,5 +192,6 @@ export const constructRotationCube = (): preparedSceneReturn => {
     updateCameraWindowSize,
     setMaterial,
     analyseScene,
+    analyseResult: undefined,
   };
 };
