@@ -7,6 +7,25 @@ export const green = 0x00ff00;
 export const blue = 0x0000ff;
 export const zeroPosition = { x: 0, y: 0, z: 0 };
 
+export interface returnCalculateBoundingBox {
+  boundingBox: THREE.Box3;
+  edgeLength: number;
+}
+
+export const calculateBoundingBox = (object: THREE.Object3D): number => {
+  const boundingBox = new THREE.Box3().setFromObject(object);
+  const edgeLength = Math.sqrt(
+    Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
+      Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
+      Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
+  );
+  return edgeLength;
+  // {
+  //   boundingBox: boundingBox,
+  //   edgeLength: edgeLength,
+  // };
+};
+
 /**
  * Traverses through a THREE.Group and executes a callback function on each child.
  *
@@ -38,14 +57,7 @@ export interface interfaceDefaultConstants {
 }
 
 /**
- * Variable containing default constants and values for various settings.
- * @typedef {Object} defaultConstants
- * @property {string} defaultLightColor - The default color for the light source.
- * @property {number} defaultLightIntensity - The default intensity of the light source.
- * @property {number} red - The red color value.
- * @property {number} green - The green color value.
- * @property {number} blue - The blue color value.
- * @property {Object} zeroPosition - The zero position vector.
+ * A collection of default constant values used for light source configuration and color definitions.
  */
 export const defaultConstants = {
   /**

@@ -432,7 +432,7 @@ export interface preparedSceneReturn {
   updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
   visible: (vis: boolean) => void;
   setMaterial: (_material: THREE.MeshStandardMaterial) => void;
-  anylyseScene: () => void;
+  analyseScene: () => void;
 }
 
 const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
@@ -486,7 +486,7 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
    * The function does not return any value and operates entirely through side effects,
    * such as logging information to the console.
    */
-  const anylyseScene = (): void => {
+  const analyseScene = (): void => {
     console.log('anylyseScene -- ');
   };
 
@@ -496,6 +496,6 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     visible,
     updateCameraWindowSize,
     setMaterial,
-    anylyseScene,
+    analyseScene,
   };
 };

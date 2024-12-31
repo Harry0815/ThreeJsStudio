@@ -7,7 +7,7 @@ import {
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
-  preparedSceneReturn
+  preparedSceneReturn,
 } from 'three-utils';
 import { cube } from '../prepared-scenes/cube';
 import { constructRotationCube } from '../prepared-scenes/rotation-cube';
@@ -109,9 +109,8 @@ export class StudioContainerComponent implements OnInit {
     console.log('testFunction');
 
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const cubeScene: preparedSceneReturn = await cube();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     cubeScene.setMaterial(
       new THREE.MeshStandardMaterial({
         color: 0xafbb1c,

@@ -179,8 +179,8 @@ export const constructRotationCube = (): preparedSceneReturn => {
    * The function does not return any value and operates entirely through side effects,
    * such as logging information to the console.
    */
-  const anylyseScene = (): void => {
-    console.log('anylyseScene -- ');
+  const analyseScene = (): void => {
+    console.log('analyseScene -- ');
   };
 
   glb();
@@ -191,6 +191,6 @@ export const constructRotationCube = (): preparedSceneReturn => {
     visible,
     updateCameraWindowSize,
     setMaterial,
-    anylyseScene,
+    analyseScene,
   };
 };

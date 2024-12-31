@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
-import { glbLoader, preparedSceneReturn, traverseGroup } from 'three-utils';
-import { v4 } from 'uuid';
+import { calculateBoundingBox, glbLoader, preparedSceneReturn, traverseGroup } from 'three-utils';
 
 /**
  * Constructs and prepares a cube with a 3D scene, camera, lighting, and interaction methods.
@@ -18,7 +17,8 @@ import { v4 } from 'uuid';
  */
 export const cube = async (): Promise<preparedSceneReturn> => {
   const cube: THREE.Group = new THREE.Group();
-  const name = v4();
+  const name = 'cube_scene';
+  let edgeLength = 0;
 
   /**
    * A function responsible for loading and attaching a GLB (GL Transmission Format Binary) file to a predefined 3D scene setup.
@@ -103,16 +103,11 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * @param {THREE.Material} material - The material to apply.
    * @returns {void}
    */
-  const setMaterial = (material: THREE.MeshStandardMaterial): void => {
+  const setMaterial = (material: THREE.Material): void => {
     traverseGroup(cube, (child) => {
       if (child instanceof THREE.Mesh) {
-        console.log('setMaterial -- CC', child);
         const m = child as THREE.Mesh;
-        m.material = new THREE.MeshStandardMaterial({
-          color: material.color,
-          roughness: material.roughness,
-          metalness: material.metalness,
-        });
+        m.material = material.clone();
       }
     });
   };
@@ -124,11 +119,14 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * The function does not return any value and operates entirely through side effects,
    * such as logging information to the console.
    */
-  const anylyseScene = (): void => {
-    console.log('anylyseScene -- ');
+  const analyseScene = (): void => {
+    console.log('analyseScene -- ');
+    edgeLength = calculateBoundingBox(cube);
+    console.log('analyseScene -- boundingBox', edgeLength);
   };
 
   await glb();
+  analyseScene();
 
   console.log('cube-Scene -- ', cube);
   return {
@@ -136,6 +134,6 @@ export const cube = async (): Promise<preparedSceneReturn> => {
     visible,
     updateCameraWindowSize,
     setMaterial,
-    anylyseScene,
+    analyseScene,
   };
 };
