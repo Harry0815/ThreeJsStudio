@@ -9,21 +9,29 @@ export const zeroPosition = { x: 0, y: 0, z: 0 };
 
 export interface interfaceAnalyseResult {
   boundingLength: number;
+  boundingBox: THREE.Box3;
 }
 
 /**
  * Calculates the length of the bounding box's diagonal edge for a given 3D object.
  *
  * @param {THREE.Object3D} object - The 3D object for which the bounding box will be calculated.
- * @returns {number} - The diagonal edge length of the bounding box.
+ * @returns {interfaceAnalyseResult} - The diagonal edge length of the bounding box and the boundingBox.
  */
-export const calculateBoundingBox = (object: THREE.Object3D): number => {
-  const boundingBox = new THREE.Box3().setFromObject(object);
-  return Math.sqrt(
-    Math.pow(boundingBox.max.x - boundingBox.min.x, 2) +
-      Math.pow(boundingBox.max.y - boundingBox.min.y, 2) +
-      Math.pow(boundingBox.max.z - boundingBox.min.z, 2),
+export const calculateBoundingBox = (object: THREE.Object3D): interfaceAnalyseResult => {
+  const ret = {
+    boundingLength: 0,
+    boundingBox: new THREE.Box3(),
+  };
+
+  ret.boundingBox = new THREE.Box3().setFromObject(object);
+  ret.boundingLength = Math.sqrt(
+    Math.pow(ret.boundingBox.max.x - ret.boundingBox.min.x, 2) +
+      Math.pow(ret.boundingBox.max.y - ret.boundingBox.min.y, 2) +
+      Math.pow(ret.boundingBox.max.z - ret.boundingBox.min.z, 2),
   );
+
+  return ret;
 };
 
 /**

@@ -7,7 +7,7 @@ import {
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
-  preparedSceneReturn
+  preparedSceneReturn,
 } from 'three-utils';
 import { cube } from '../prepared-scenes/cube';
 import { ground } from '../prepared-scenes/ground';
@@ -111,7 +111,6 @@ export class StudioContainerComponent implements OnInit {
 
     // this.#preparedConstruct?.addConstructedScene('ground', ground());
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
-    this.#preparedConstruct?.addContent('ground', this.#createGroundFloor());
     const cubeScene: preparedSceneReturn = await cube();
     cubeScene.setMaterial(
       new THREE.MeshStandardMaterial({
@@ -121,8 +120,11 @@ export class StudioContainerComponent implements OnInit {
       }),
     );
     this.#preparedConstruct?.addConstructedScene('cube-glb', cubeScene);
+    const groundFloor = ground(this.#preparedConstruct?.basicControls.scene ?? new THREE.Scene());
+    this.#preparedConstruct?.addConstructedScene('ground', groundFloor);
+    groundFloor.reCalculateDimensions(cubeScene.analyseResult ?? { boundingLength: 0, boundingBox: new THREE.Box3() });
 
-    const boundingBoxEdge = 1;
+    const boundingBoxEdge = cubeScene.analyseResult?.boundingLength ?? 1;
 
     const ambientLight = new Light({
       type: lightTypeEnum.Ambient,

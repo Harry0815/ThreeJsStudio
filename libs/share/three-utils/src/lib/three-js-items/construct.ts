@@ -197,7 +197,7 @@ export const prepareConstruct = (
         for (const l of constructedScenes.values()) {
           // Update the controls if available
           l.animate(renderer, construct.scene, construct.camera.camera);
-          renderer.clearDepth();
+          // renderer.clearDepth();
         }
         // Call the provided callback function with the renderer, scene, and camera
         pfkt(renderer, construct.scene, construct.camera.camera);
@@ -436,6 +436,7 @@ export interface preparedSceneReturn {
   setMaterial: (_material: THREE.MeshStandardMaterial) => void;
   analyseScene: () => void;
   analyseResult: interfaceAnalyseResult | undefined;
+  reCalculateDimensions: (dimensions: interfaceAnalyseResult) => void;
 }
 
 const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
@@ -493,6 +494,17 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     console.log('anylyseScene -- ');
   };
 
+  /**
+   * Recalculates the given dimensions based on the provided analysis result.
+   * This function processes and logs the recalculated dimensions for further use.
+   *
+   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
+   * @returns {void} This function does not return a value.
+   */
+  const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
+    console.log('reCalculateDimensions -- ', dimensions);
+  };
+
   console.log('constructItem -- ');
   return {
     animate,
@@ -501,5 +513,6 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     setMaterial,
     analyseScene,
     analyseResult: undefined,
+    reCalculateDimensions,
   };
 };

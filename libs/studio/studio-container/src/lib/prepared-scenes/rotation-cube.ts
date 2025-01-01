@@ -5,11 +5,12 @@ import {
   createTextLabel,
   glbLoader,
   green,
+  interfaceAnalyseResult,
   Light,
   lightTypeEnum,
   preparedSceneReturn,
   red,
-  zeroPosition
+  zeroPosition,
 } from 'three-utils';
 
 /**
@@ -183,6 +184,17 @@ export const constructRotationCube = (): preparedSceneReturn => {
     console.log('analyseScene -- ');
   };
 
+  /**
+   * Recalculates the given dimensions based on the provided analysis result.
+   * This function processes and logs the recalculated dimensions for further use.
+   *
+   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
+   * @returns {void} This function does not return a value.
+   */
+  const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
+    console.log('reCalculateDimensions -- ', dimensions);
+  };
+
   glb();
 
   console.log('cube-Scene -- ', groupCube, cubeScene);
@@ -193,5 +205,6 @@ export const constructRotationCube = (): preparedSceneReturn => {
     setMaterial,
     analyseScene,
     analyseResult: undefined,
+    reCalculateDimensions,
   };
 };

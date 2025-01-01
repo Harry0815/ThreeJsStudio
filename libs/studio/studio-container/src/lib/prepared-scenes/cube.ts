@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
-import { calculateBoundingBox, glbLoader, preparedSceneReturn, traverseGroup } from 'three-utils';
+import {
+  calculateBoundingBox,
+  glbLoader,
+  interfaceAnalyseResult,
+  preparedSceneReturn,
+  traverseGroup,
+} from 'three-utils';
 
 /**
  * Constructs and prepares a cube with a 3D scene, camera, lighting, and interaction methods.
@@ -18,9 +24,7 @@ import { calculateBoundingBox, glbLoader, preparedSceneReturn, traverseGroup } f
 export const cube = async (): Promise<preparedSceneReturn> => {
   const cube: THREE.Group = new THREE.Group();
   const name = 'cube_scene';
-  const analyseResult = {
-    boundingLength: 0,
-  };
+  let analyseResult: interfaceAnalyseResult | undefined = undefined;
 
   /**
    * A function responsible for loading and attaching a GLB (GL Transmission Format Binary) file to a predefined 3D scene setup.
@@ -36,7 +40,7 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * Note that this function does not return any value.
    */
   const glb = async (): Promise<void> => {
-    await glbLoader(undefined, 'cube/viewCube.glb').then((gltf: GLTF | undefined) => {
+    await glbLoader(undefined, 'lotus.glb').then((gltf: GLTF | undefined) => {
       if (gltf?.scene) {
         cube.add(gltf.scene);
         cube.name = name;
@@ -123,8 +127,19 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    */
   const analyseScene = (): void => {
     console.log('analyseScene -- ');
-    analyseResult.boundingLength = calculateBoundingBox(cube);
-    console.log('analyseScene -- boundingBox', analyseResult.boundingLength);
+    analyseResult = calculateBoundingBox(cube);
+    console.log('analyseScene -- boundingBox', analyseResult);
+  };
+
+  /**
+   * Recalculates the given dimensions based on the provided analysis result.
+   * This function processes and logs the recalculated dimensions for further use.
+   *
+   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
+   * @returns {void} This function does not return a value.
+   */
+  const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
+    console.log('reCalculateDimensions -- ', dimensions);
   };
 
   await glb();
@@ -139,5 +154,6 @@ export const cube = async (): Promise<preparedSceneReturn> => {
     setMaterial,
     analyseScene,
     analyseResult: analyseResult,
+    reCalculateDimensions,
   };
 };
