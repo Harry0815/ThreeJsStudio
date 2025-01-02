@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-import { GLTF } from 'three-stdlib';
 import {
   blue,
   createTextLabel,
@@ -11,7 +9,9 @@ import {
   preparedSceneReturn,
   red,
   zeroPosition,
-} from 'three-utils';
+} from '@three-js-studio/three-utils';
+import * as THREE from 'three';
+import { GLTF } from 'three-stdlib';
 
 /**
  * Constructs and prepares a rotation cube with a 3D scene, camera, lighting, and interaction methods.

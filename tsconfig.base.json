@@ -23,7 +23,7 @@
       "@three-js-studio/StudioContainer": [
         "libs/studio/studio-container/src/index.ts"
       ],
-      "three-utils": [
+      "@three-js-studio/three-utils": [
         "libs/share/three-utils/src/index.ts"
       ]
     }

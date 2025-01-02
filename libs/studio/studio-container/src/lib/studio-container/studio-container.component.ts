@@ -1,15 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
-import * as THREE from 'three';
 import {
   construct,
   Light,
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
-  preparedSceneReturn,
-} from 'three-utils';
-import { cube } from '../prepared-scenes/cube';
+} from '@three-js-studio/three-utils';
+import * as THREE from 'three';
+import { glbScene } from '../prepared-scenes/glb-scene';
 import { ground } from '../prepared-scenes/ground';
 import { constructRotationCube } from '../prepared-scenes/rotation-cube';
 
@@ -54,7 +53,7 @@ export class StudioContainerComponent implements OnInit {
     const constConstruct = construct(1, 1);
     this.#preparedConstruct = prepareConstruct(constConstruct, this.canvasElement()?.nativeElement);
     this.#updateRendererSize();
-    void this.#testFunction();
+    this.#testFunction();
   }
 
   /**
@@ -106,25 +105,15 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {Promise<void>} A Promise that resolves when the function completes.
    */
-  async #testFunction(): Promise<void> {
+  #testFunction(): void {
     console.log('testFunction');
 
     // this.#preparedConstruct?.addConstructedScene('ground', ground());
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
-    const cubeScene: preparedSceneReturn = await cube();
-    cubeScene.setMaterial(
-      new THREE.MeshStandardMaterial({
-        color: 0xafbb1c,
-        roughness: 0.5,
-        metalness: 0.5,
-      }),
-    );
-    this.#preparedConstruct?.addConstructedScene('cube-glb', cubeScene);
     const groundFloor = ground(this.#preparedConstruct?.basicControls.scene ?? new THREE.Scene());
     this.#preparedConstruct?.addConstructedScene('ground', groundFloor);
-    groundFloor.reCalculateDimensions(cubeScene.analyseResult ?? { boundingLength: 0, boundingBox: new THREE.Box3() });
 
-    const boundingBoxEdge = cubeScene.analyseResult?.boundingLength ?? 1;
+    // const boundingBoxEdge = 1; // cubeScene.analyseResult?.boundingLength ?? 1;
 
     const ambientLight = new Light({
       type: lightTypeEnum.Ambient,
@@ -138,19 +127,18 @@ export class StudioContainerComponent implements OnInit {
       skyColor: 0xfbfcff,
       groundColor: 0x7e7a80,
       intensity: 0.32 * Math.PI,
-      position: [0, boundingBoxEdge, 0],
+      position: [0, 10, 0],
     });
     const directionalLight = new Light({
       type: lightTypeEnum.Directional,
       color: 0xffffff,
       intensity: 0.3 * Math.PI,
-      position: [boundingBoxEdge / 2, boundingBoxEdge, boundingBoxEdge],
+      position: [5, 10, 10],
     });
 
     this.#preparedConstruct?.addLight('ambient', ambientLight);
     this.#preparedConstruct?.addLight('hemisphere', hemisphereLight);
     this.#preparedConstruct?.addLight('direct', directionalLight);
-    // this.#preparedConstruct?.deleteLight('standard');
     this.#preparedConstruct?.switchAllLights(true, true);
 
     if (this.#preparedConstruct) {
@@ -164,7 +152,7 @@ export class StudioContainerComponent implements OnInit {
         enablePan: false,
         enableRotate: true,
         enableZoom: true,
-        minDistance: boundingBoxEdge,
+        minDistance: 1,
       });
 
       this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
@@ -175,21 +163,61 @@ export class StudioContainerComponent implements OnInit {
   }
 
   /**
-   * Creates and returns a ground floor mesh object using THREE.js.
-   * The ground floor is represented as a plane geometry with a standard material.
+   * Handles the click event on the canvas.
+   * Executes specific actions, such as logging the event
+   * and resetting the constructed scene if a prepared construct exists.
    *
-   * @returns {THREE.Group} A group object representing the ground floor.
+   * @return {void} Does not return a value.
    */
-  #createGroundFloor(): THREE.Group {
-    console.log('createGroundFloor');
-    const geometry = new THREE.PlaneGeometry(10, 10);
-    geometry.rotateX(-Math.PI / 2.15);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x0f0f1f,
-      side: THREE.DoubleSide,
-    });
-    const ground = new THREE.Mesh(geometry, material);
-    ground.receiveShadow = true;
-    return new THREE.Group().add(ground);
+  clickCanvas(): void {
+    console.log('clickCanvas');
+    this.#preparedConstruct?.resetConstructedScene();
+  }
+
+  /**
+   * Switches the current scene to the "lotus" scene by loading the specified 3D model file.
+   *
+   * @return {Promise<void>} A promise that resolves when the "lotus" scene has been successfully loaded.
+   */
+  async switchToLotus(): Promise<void> {
+    await this.#sitchToScene('lotus.glb');
+  }
+
+  /**
+   * Switches the scene to display a cube.
+   * This method asynchronously transitions to a predefined cube view
+   * represented by the 'cube/viewCube.glb' file.
+   *
+   * @return {Promise<void>} A promise that resolves when the scene has successfully switched.
+   */
+  async switchToCube(): Promise<void> {
+    await this.#sitchToScene('cube/viewCube.glb');
+  }
+
+  /**
+   * Switches to the specified scene by its key. If the scene is not already constructed,
+   * it will load and construct it. Makes the specified scene, the ground floor, and
+   * the rotation cube visible while resetting other constructed scenes.
+   *
+   * @param {string} key - The unique identifier for the scene to switch to.
+   * @return {Promise<void>} Resolves when the scene switching process is complete.
+   */
+  async #sitchToScene(key: string): Promise<void> {
+    this.#preparedConstruct?.switchAllConstructedScenes(false);
+    let scene = this.#preparedConstruct?.getConstructedScene(key);
+    if (!scene) {
+      scene = await glbScene(key);
+      this.#preparedConstruct?.addConstructedScene(key, scene);
+    }
+    const groundFloor = this.#preparedConstruct?.getConstructedScene('ground');
+    const rotationCube = this.#preparedConstruct?.getConstructedScene('rotationCube');
+
+    if (groundFloor) {
+      groundFloor.reCalculateDimensions(scene.analyseResult ?? { boundingLength: 0, boundingBox: new THREE.Box3() });
+    }
+    this.#preparedConstruct?.resetConstructedScene();
+    groundFloor?.visible(true);
+    scene.visible(true);
+    rotationCube?.visible(true);
   }
 }

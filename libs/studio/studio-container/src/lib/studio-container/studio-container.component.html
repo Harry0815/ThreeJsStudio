@@ -1,4 +1,7 @@
 <div id="viewerContainer" class="hss-renderer-container">
+  <button id="resetButton" (click)="clickCanvas()"> Reset</button>
+  <button id="lotus" (click)="switchToLotus()">Lotus</button>
+  <button id="cube" (click)="switchToCube()">Cube</button>
   <div id="threeElement" #canvasElement class="hss-renderer-three">
     <div id="cubeElement" #cubeElement class="hss-renderer-cube">
       <div id="actionElement" #actionElement class="hss-renderer-action">

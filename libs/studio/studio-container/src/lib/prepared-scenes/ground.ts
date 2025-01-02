@@ -1,5 +1,5 @@
+import { interfaceAnalyseResult, preparedSceneReturn } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
-import { interfaceAnalyseResult, preparedSceneReturn } from 'three-utils';
 
 /**
  * Initializes and configures a ground plane for a Three.js scene.
@@ -22,17 +22,49 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
   const planeGeometry = new THREE.PlaneGeometry(1, 1);
   const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808088, side: THREE.DoubleSide });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-  let gridHelper = new THREE.GridHelper(1, 10);
 
   plane.rotation.x = -Math.PI / 2;
   plane.position.z = 0; //-0.55;
-  // gridHelper.rotation.x = -Math.PI / 2;
-  // gridHelper.position.z = 0; //-0.55;
 
   const analyseResult = {
     boundingLength: 0,
     boundingBox: new THREE.Box3(),
   };
+
+  const createRectangularGrid = (
+    width: number,
+    height: number,
+    divisionsX: number,
+    divisionsZ: number,
+  ): THREE.Group => {
+    const gridGroup = new THREE.Group();
+
+    // Material für die Gitterlinien
+    const material = new THREE.LineBasicMaterial({ color: 0 });
+
+    for (let i = 0; i <= divisionsZ; i++) {
+      const z = (i / divisionsZ) * height - height / 2;
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-width / 2, 0, z),
+        new THREE.Vector3(width / 2, 0, z),
+      ]);
+      const line = new THREE.Line(geometry, material);
+      gridGroup.add(line);
+    }
+
+    for (let i = 0; i <= divisionsX; i++) {
+      const x = (i / divisionsX) * width - width / 2;
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, 0, -height / 2),
+        new THREE.Vector3(x, 0, height / 2),
+      ]);
+      const line = new THREE.Line(geometry, material);
+      gridGroup.add(line);
+    }
+
+    return gridGroup;
+  };
+  let gridHelper = createRectangularGrid(1, 1, 10, 10);
 
   /**
    * Updates the camera window size to the specified width and height.
@@ -65,7 +97,7 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
    * @returns {void}
    */
   const visible = (vis: boolean): void => {
-    plane.visible = vis;
+    gridHelper.visible = vis;
   };
 
   /**
@@ -98,23 +130,17 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
    */
   const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
     scene.remove(gridHelper);
-    const gridSize = Math.ceil(
-      Math.max(
-        dimensions.boundingBox.max.x - dimensions.boundingBox.min.x,
-        dimensions.boundingBox.max.z - dimensions.boundingBox.min.z,
-      ),
-    );
+    const gridSizeX = Math.ceil(dimensions.boundingBox.max.x - dimensions.boundingBox.min.x);
+    const gridSizeZ = Math.ceil(dimensions.boundingBox.max.z - dimensions.boundingBox.min.z);
     console.log('reCalculateDimensions -- ', dimensions);
-    gridHelper = new THREE.GridHelper(gridSize, gridSize * 10);
-    gridHelper.position.y = dimensions.boundingBox.min.y * 1.05;
+
+    gridHelper = createRectangularGrid(gridSizeX, gridSizeZ, gridSizeX * 10, gridSizeZ * 10);
+    gridHelper.position.y = dimensions.boundingBox.min.y * 1.2;
     scene.add(gridHelper);
   };
 
-  const roundToNext10 = (num: number): number => {
-    return Math.ceil(num);
-  };
-
   analyseScene();
+
   console.log('ground-Scene -- ');
 
   return {

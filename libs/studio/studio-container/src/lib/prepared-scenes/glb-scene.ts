@@ -8,44 +8,16 @@ import {
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
 
-/**
- * Constructs and prepares a cube with a 3D scene, camera, lighting, and interaction methods.
- *
- * This function creates a 3D model of a cube which can be rendered in a specific scene.
- * It implements necessary utilities, including lighting, camera setup, and the ability to animate,
- * update the viewport, and toggle visibility of the cube.
- *
- * @returns {preparedSceneReturn} An object containing methods for animating the cube,
- * changing its visibility, and updating the camera window size:
- * - `animate`: A method to synchronize the camera's orientation with the cube.
- * - `visible`: A method to set the visibility of the cube.
- * - `updateCameraWindowSize`: A method to adjust the camera's dimensions based on given viewport parameters.
- */
-export const cube = async (): Promise<preparedSceneReturn> => {
-  const cube: THREE.Group = new THREE.Group();
-  const name = 'cube_scene';
+export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
+  const glbContainer: THREE.Group = new THREE.Group();
+  const name = path;
   let analyseResult: interfaceAnalyseResult | undefined = undefined;
 
-  /**
-   * A function responsible for loading and attaching a GLB (GL Transmission Format Binary) file to a predefined 3D scene setup.
-   *
-   * The function utilizes the `glbLoader` utility to asynchronously load a GLB file. Upon successful loading,
-   * the resulting scene from the GLB file is extracted and added to a hierarchy of 3D objects consisting of `cube`,
-   * `groupCube`, and `cubeScene`. This ensures that the loaded 3D model integrates properly into the larger
-   * 3D environment represented by `cubeScene`.
-   *
-   * It is important to ensure that the related dependencies, such as `glbLoader`, `cube`, `groupCube`,
-   * and `cubeScene`, are defined and initialized before calling this function.
-   *
-   * Note that this function does not return any value.
-   */
   const glb = async (): Promise<void> => {
-    await glbLoader(undefined, 'cube/viewCube.glb').then((gltf: GLTF | undefined) => {
+    await glbLoader(undefined, path).then((gltf: GLTF | undefined) => {
       if (gltf?.scene) {
-        cube.add(gltf.scene);
-        cube.name = name;
-
-        // setMaterial(new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5, metalness: 0.5 }));
+        glbContainer.add(gltf.scene);
+        glbContainer.name = name;
       }
     });
   };
@@ -82,25 +54,19 @@ export const cube = async (): Promise<preparedSceneReturn> => {
   const addContent = (scene: THREE.Scene): void => {
     let found = false;
     scene.traverse((child) => {
-      if (child.name === cube.name) {
+      if (child.name === glbContainer.name) {
         found = true;
         return;
       }
     });
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!found) {
-      scene.add(cube);
+      scene.add(glbContainer);
     }
   };
 
-  /**
-   * Sets the visibility of the rotation cube.
-   *
-   * @param {boolean} vis - A boolean value indicating whether the cube should be visible (`true`) or hidden (`false`).
-   * @returns {void} This function does not return any value.
-   */
   const visible = (vis: boolean): void => {
-    cube.visible = vis;
+    glbContainer.visible = vis;
   };
 
   /**
@@ -110,7 +76,7 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * @returns {void}
    */
   const setMaterial = (material: THREE.Material): void => {
-    traverseGroup(cube, (child) => {
+    traverseGroup(glbContainer, (child) => {
       if (child instanceof THREE.Mesh) {
         const m = child as THREE.Mesh;
         m.material = material.clone();
@@ -127,7 +93,7 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    */
   const analyseScene = (): void => {
     console.log('analyseScene -- ');
-    analyseResult = calculateBoundingBox(cube);
+    analyseResult = calculateBoundingBox(glbContainer);
     console.log('analyseScene -- boundingBox', analyseResult);
   };
 
@@ -145,7 +111,7 @@ export const cube = async (): Promise<preparedSceneReturn> => {
   await glb();
   analyseScene();
 
-  console.log('cube-Scene -- ', cube);
+  console.log('glbContainer-Scene -- ', glbContainer);
 
   return {
     animate,

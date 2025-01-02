@@ -35,6 +35,8 @@ export interface preparedConstructReturn {
   addConstructedScene: (key: string, scene: preparedSceneReturn) => void;
   deleteConstructedScene: (key: string) => void;
   getConstructedScene: (key: string) => preparedSceneReturn | undefined;
+  switchAllConstructedScenes: (on: boolean) => void;
+  resetConstructedScene: () => void;
 
   addGlb: (name: string, contentBase64: string | undefined, path: string) => void;
 }
@@ -125,6 +127,8 @@ export const prepareConstruct = (
     controls.enableZoom = false;
     controls.enablePan = false;
     controls.enableRotate = false;
+
+    controls.saveState();
   }
   // Append the renderer to the canvas element
   canvasElement.appendChild(renderer.domElement);
@@ -135,6 +139,24 @@ export const prepareConstruct = (
       construct.scene.add(light); //  as THREE.Light);
     }
   }
+
+  /**
+   * Resets the constructed scene to its initial state.
+   * This function performs the following actions:
+   * - Logs a message indicating that the reset process has been triggered.
+   * - Resets the controls, if they are initialized.
+   *
+   * It is primarily used to reinitialize or clear the scene configuration
+   * in environments where interactive controls or parameters might have been modified.
+   *
+   * @returns {void} This function does not return any value.
+   */
+  const resetConstructedScene = (): void => {
+    console.log('resetConstructedScene -- ');
+    controls?.reset();
+  };
+
+  resetConstructedScene();
 
   /**
    * Adds a constructed scene to the collection of constructed scenes.
@@ -165,6 +187,19 @@ export const prepareConstruct = (
    */
   const deleteConstructedScene = (key: string): void => {
     constructedScenes.delete(key);
+  };
+
+  /**
+   * Toggles the visibility of all constructed scenes.
+   *
+   * @param {boolean} on - Determines the visibility state for all constructed scenes.
+   *                        Pass `true` to make all constructed scenes visible,
+   *                        or `false` to hide them.
+   */
+  const switchAllConstructedScenes = (on: boolean): void => {
+    for (const l of constructedScenes.values()) {
+      l.visible(on);
+    }
   };
 
   /**
@@ -224,6 +259,7 @@ export const prepareConstruct = (
       controls.enabled = orbitConfig.enabled;
       controls.minDistance = orbitConfig.minDistance ?? 0;
       controls.maxDistance = orbitConfig.maxDistance ?? Infinity;
+      controls.saveState();
     }
   };
 
@@ -426,6 +462,8 @@ export const prepareConstruct = (
     addConstructedScene,
     getConstructedScene,
     deleteConstructedScene,
+    resetConstructedScene,
+    switchAllConstructedScenes,
   };
 };
 
