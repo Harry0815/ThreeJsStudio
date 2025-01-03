@@ -471,7 +471,7 @@ export interface preparedSceneReturn {
   animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
   updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
   visible: (vis: boolean) => void;
-  setMaterial: (_material: THREE.MeshStandardMaterial) => void;
+  setMaterial: (_material: THREE.MeshPhysicalMaterial) => void;
   analyseScene: () => void;
   analyseResult: interfaceAnalyseResult | undefined;
   reCalculateDimensions: (dimensions: interfaceAnalyseResult) => void;

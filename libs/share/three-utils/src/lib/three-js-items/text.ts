@@ -7,7 +7,7 @@ export const createTextLabel = (
   position: THREE.Vector3,
   color = 0xffffff,
   scene: THREE.Group,
-) => {
+): void => {
   const loader = new FontLoader();
 
   loader.load(`three-fonts/${fontName}`, (font) => {

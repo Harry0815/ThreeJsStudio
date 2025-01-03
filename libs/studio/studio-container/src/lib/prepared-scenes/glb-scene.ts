@@ -5,14 +5,51 @@ import {
   preparedSceneReturn,
   traverseGroup,
 } from '@three-js-studio/three-utils';
+import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
 
-export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
+/**
+ * Asynchronously loads and prepares a 3D scene from a GLB (Binary glTF) file.
+ *
+ * This function takes the path to a GLB file, optionally applies a material to the loaded meshes,
+ * and sets up various functionalities to be used with the loaded scene. It returns an object
+ * containing methods for interacting with the scene, such as animation, visibility control,
+ * material setting, and scene analysis.
+ *
+ * The function internally loads the GLB file, builds the scene with the provided material
+ * (if available), and processes the scene's bounding box for further interaction.
+ *
+ * @param {string} path - The file path to the GLB file to be loaded and processed.
+ * @param {THREE.MeshPhysicalMaterial | undefined} [material=undefined] - An optional custom material
+ *        to override the default materials in the loaded scene.
+ * @returns {Promise<preparedSceneReturn>} A promise that resolves to an object with utility functions
+ *          and properties for managing and interacting with the loaded 3D scene.
+ */
+export const glbScene = async (
+  path: string,
+  material: THREE.MeshPhysicalMaterial | undefined = undefined,
+): Promise<preparedSceneReturn> => {
   const glbContainer: THREE.Group = new THREE.Group();
   const name = path;
   let analyseResult: interfaceAnalyseResult | undefined = undefined;
+  let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
 
+  /**
+   * Asynchronously loads a GLB (Binary glTF) file and adds it to a designated container.
+   *
+   * The function utilizes a loader to fetch and decode the GLB file. Once loaded,
+   * the corresponding scene is appended to a container object, and the container's
+   * name is set to a pre-defined value.
+   *
+   * The function does not return any value but relies on side effects to modify
+   * the `glbContainer` object with the loaded scene. It ensures that the loader
+   * properly handles undefined values or missing scenes within the GLB file.
+   *
+   * @async
+   * @function
+   * @returns {Promise<void>} A promise that resolves when the GLB file is loaded and processed.
+   */
   const glb = async (): Promise<void> => {
     await glbLoader(undefined, path).then((gltf: GLTF | undefined) => {
       if (gltf?.scene) {
@@ -43,6 +80,7 @@ export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
    */
   const animate = (_renderer: THREE.WebGLRenderer, scene: THREE.Scene, _camera: THREE.Camera): void => {
     addContent(scene);
+    // if (materialTween !== undefined) materialTween.tweenObject?.update();
   };
 
   /**
@@ -65,6 +103,11 @@ export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
     }
   };
 
+  /**
+   * Updates the visibility state of the global container.
+   *
+   * @param {boolean} vis - A boolean value determining whether the container should be visible (true) or hidden (false).
+   */
   const visible = (vis: boolean): void => {
     glbContainer.visible = vis;
   };
@@ -75,13 +118,18 @@ export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
    * @param {THREE.Material} material - The material to apply.
    * @returns {void}
    */
-  const setMaterial = (material: THREE.Material): void => {
-    traverseGroup(glbContainer, (child) => {
-      if (child instanceof THREE.Mesh) {
-        const m = child as THREE.Mesh;
-        m.material = material.clone();
-      }
-    });
+  const setMaterial = (material: THREE.MeshPhysicalMaterial): void => {
+    if (!actualMaterial) {
+      return;
+    }
+    const t1 = new JEASINGS.JEasing(actualMaterial.color)
+      .to({ r: material.color.r, g: material.color.g, b: material.color.b }, 1000)
+      .easing(JEASINGS.Linear.None)
+      .chain(new JEASINGS.JEasing(actualMaterial).to({ metalness: material.metalness }, 1000))
+      .chain(new JEASINGS.JEasing(actualMaterial).to({ roughness: material.roughness }, 1000))
+      .chain(new JEASINGS.JEasing(actualMaterial).to({ clearcoat: material.clearcoat }, 1000))
+      .chain(new JEASINGS.JEasing(actualMaterial).to({ clearcoatRoughness: material.clearcoatRoughness }, 1000));
+    t1.start();
   };
 
   /**
@@ -110,6 +158,18 @@ export const glbScene = async (path: string): Promise<preparedSceneReturn> => {
 
   await glb();
   analyseScene();
+
+  if (material) {
+    actualMaterial = material.clone();
+    traverseGroup(glbContainer, (child) => {
+      if ((child as unknown) instanceof THREE.Mesh) {
+        const m = child as THREE.Mesh;
+        if (actualMaterial) {
+          m.material = actualMaterial;
+        }
+      }
+    });
+  }
 
   console.log('glbContainer-Scene -- ', glbContainer);
 

@@ -7,6 +7,7 @@ import {
   prepareConstruct,
   preparedConstructReturn,
 } from '@three-js-studio/three-utils';
+import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { glbScene } from '../prepared-scenes/glb-scene';
 import { ground } from '../prepared-scenes/ground';
@@ -34,8 +35,7 @@ export class StudioContainerComponent implements OnInit {
    */
   #preparedConstruct: preparedConstructReturn | undefined = undefined;
 
-  #rendererWidth = 1;
-  #rendererHeight = 1;
+  #actualConstructedScene = '';
 
   /**
    * Initializes the component and prepares the construct if the canvas element is available.
@@ -89,10 +89,8 @@ export class StudioContainerComponent implements OnInit {
    * @param newHeight - The new height for the renderer.
    */
   #updateCameraWindowSize(newWidth: number, newHeight: number): void {
-    this.#rendererWidth = newWidth;
-    this.#rendererHeight = newHeight;
     if (this.#preparedConstruct) {
-      this.#preparedConstruct.updateCameraWindowSize(this.#rendererWidth, this.#rendererHeight);
+      this.#preparedConstruct.updateCameraWindowSize(newWidth, newHeight);
     }
   }
 
@@ -112,8 +110,6 @@ export class StudioContainerComponent implements OnInit {
     this.#preparedConstruct?.addConstructedScene('rotationCube', constructRotationCube());
     const groundFloor = ground(this.#preparedConstruct?.basicControls.scene ?? new THREE.Scene());
     this.#preparedConstruct?.addConstructedScene('ground', groundFloor);
-
-    // const boundingBoxEdge = 1; // cubeScene.analyseResult?.boundingLength ?? 1;
 
     const ambientLight = new Light({
       type: lightTypeEnum.Ambient,
@@ -156,7 +152,7 @@ export class StudioContainerComponent implements OnInit {
       });
 
       this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
-        // console.log('animate');
+        JEASINGS.update();
       });
     }
     this.#updateRendererSize();
@@ -175,12 +171,32 @@ export class StudioContainerComponent implements OnInit {
   }
 
   /**
+   * Handles the click event to change the color and material properties of a specific 3D object in the scene.
+   * Updates the material of the designated 3D model with predefined properties such as color, roughness, clearcoat, and metalness.
+   * @return {void} Does not return any value.
+   */
+  clickChangeColor(): void {
+    console.log('clickChangeColor', this.#actualConstructedScene);
+    const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    const mesh = new THREE.MeshPhysicalMaterial({
+      color: 0xaf2010,
+      roughness: 100,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.5,
+      metalness: 0.9,
+    });
+
+    scene?.setMaterial(mesh);
+  }
+
+  /**
    * Switches the current scene to the "lotus" scene by loading the specified 3D model file.
    *
    * @return {Promise<void>} A promise that resolves when the "lotus" scene has been successfully loaded.
    */
   async switchToLotus(): Promise<void> {
-    await this.#sitchToScene('lotus.glb');
+    this.#actualConstructedScene = 'lotus.glb';
+    await this.#sitchToScene(this.#actualConstructedScene);
   }
 
   /**
@@ -191,7 +207,8 @@ export class StudioContainerComponent implements OnInit {
    * @return {Promise<void>} A promise that resolves when the scene has successfully switched.
    */
   async switchToCube(): Promise<void> {
-    await this.#sitchToScene('cube/viewCube.glb');
+    this.#actualConstructedScene = 'cube/viewCube.glb';
+    await this.#sitchToScene(this.#actualConstructedScene);
   }
 
   /**
@@ -206,7 +223,16 @@ export class StudioContainerComponent implements OnInit {
     this.#preparedConstruct?.switchAllConstructedScenes(false);
     let scene = this.#preparedConstruct?.getConstructedScene(key);
     if (!scene) {
-      scene = await glbScene(key);
+      scene = await glbScene(
+        key,
+        new THREE.MeshPhysicalMaterial({
+          color: 0xafcb10,
+          roughness: 0.5,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.5,
+          metalness: 0.5,
+        }),
+      );
       this.#preparedConstruct?.addConstructedScene(key, scene);
     }
     const groundFloor = this.#preparedConstruct?.getConstructedScene('ground');
