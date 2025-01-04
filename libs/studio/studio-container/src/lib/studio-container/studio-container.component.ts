@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import {
   construct,
+  hasMouseSupportSupport,
+  ishandleMaterialSupport,
   Light,
   lightTypeEnum,
   prepareConstruct,
@@ -36,6 +38,8 @@ export class StudioContainerComponent implements OnInit {
   #preparedConstruct: preparedConstructReturn | undefined = undefined;
 
   #actualConstructedScene = '';
+  readonly #mouseVektor = new THREE.Vector2();
+  readonly #raycaster = new THREE.Raycaster();
 
   /**
    * Initializes the component and prepares the construct if the canvas element is available.
@@ -64,6 +68,18 @@ export class StudioContainerComponent implements OnInit {
   @HostListener('window:resize', ['$event'])
   onWindowResize(_event: Event): void {
     this.#updateRendererSize();
+  }
+
+  /**
+   *
+   * @param _event
+   */
+  @HostListener('click', ['$event'])
+  onClick(_event: MouseEvent): void {
+    const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    if (hasMouseSupportSupport(scene)) {
+      scene.container.onClick(_event);
+    }
   }
 
   /**
@@ -165,8 +181,8 @@ export class StudioContainerComponent implements OnInit {
    *
    * @return {void} Does not return a value.
    */
-  clickCanvas(): void {
-    console.log('clickCanvas');
+  resetCanvas(): void {
+    console.log('resetCanvas');
     this.#preparedConstruct?.resetConstructedScene();
   }
 
@@ -178,15 +194,16 @@ export class StudioContainerComponent implements OnInit {
   clickChangeColor(): void {
     console.log('clickChangeColor', this.#actualConstructedScene);
     const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
-    const mesh = new THREE.MeshPhysicalMaterial({
-      color: 0xaf2010,
-      roughness: 100,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.5,
-      metalness: 0.9,
-    });
-
-    scene?.setMaterial(mesh);
+    if (ishandleMaterialSupport(scene)) {
+      const mesh = new THREE.MeshPhysicalMaterial({
+        color: 0xaf2010,
+        roughness: 100,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.5,
+        metalness: 0.9,
+      });
+      scene.setMaterial(mesh);
+    }
   }
 
   /**
@@ -195,6 +212,11 @@ export class StudioContainerComponent implements OnInit {
    * @return {Promise<void>} A promise that resolves when the "lotus" scene has been successfully loaded.
    */
   async switchToLotus(): Promise<void> {
+    const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    if (scene) {
+      scene.visible(false);
+    }
+
     this.#actualConstructedScene = 'lotus.glb';
     await this.#sitchToScene(this.#actualConstructedScene);
   }
@@ -207,6 +229,11 @@ export class StudioContainerComponent implements OnInit {
    * @return {Promise<void>} A promise that resolves when the scene has successfully switched.
    */
   async switchToCube(): Promise<void> {
+    const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    if (scene) {
+      scene.visible(false);
+    }
+
     this.#actualConstructedScene = 'cube/viewCube.glb';
     await this.#sitchToScene(this.#actualConstructedScene);
   }
@@ -232,6 +259,7 @@ export class StudioContainerComponent implements OnInit {
           clearcoatRoughness: 0.5,
           metalness: 0.5,
         }),
+        this.#preparedConstruct,
       );
       this.#preparedConstruct?.addConstructedScene(key, scene);
     }
@@ -239,7 +267,9 @@ export class StudioContainerComponent implements OnInit {
     const rotationCube = this.#preparedConstruct?.getConstructedScene('rotationCube');
 
     if (groundFloor) {
-      groundFloor.reCalculateDimensions(scene.analyseResult ?? { boundingLength: 0, boundingBox: new THREE.Box3() });
+      if (scene.boundingBox) {
+        groundFloor.reCalculateDimensions(scene.boundingBox);
+      }
     }
     this.#preparedConstruct?.resetConstructedScene();
     groundFloor?.visible(true);

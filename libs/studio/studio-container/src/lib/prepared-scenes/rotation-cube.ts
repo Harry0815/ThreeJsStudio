@@ -164,27 +164,6 @@ export const constructRotationCube = (): preparedSceneReturn => {
   };
 
   /**
-   * Sets the material for an object.
-   *
-   * @param {THREE.Material} _material - The material to apply.
-   * @returns {void}
-   */
-  const setMaterial = (_material: THREE.Material): void => {
-    console.log('setMaterial -- ');
-  };
-
-  /**
-   * Analyzes the current scene or context of the application.
-   * This function executes the necessary logic to evaluate and log details about the scene.
-   *
-   * The function does not return any value and operates entirely through side effects,
-   * such as logging information to the console.
-   */
-  const analyseScene = (): void => {
-    console.log('analyseScene -- ');
-  };
-
-  /**
    * Recalculates the given dimensions based on the provided analysis result.
    * This function processes and logs the recalculated dimensions for further use.
    *
@@ -202,9 +181,7 @@ export const constructRotationCube = (): preparedSceneReturn => {
     animate,
     visible,
     updateCameraWindowSize,
-    setMaterial,
-    analyseScene,
-    analyseResult: undefined,
     reCalculateDimensions,
+    boundingBox: undefined,
   };
 };

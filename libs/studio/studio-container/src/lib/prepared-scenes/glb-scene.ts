@@ -1,8 +1,12 @@
 import {
+  analyse,
   calculateBoundingBox,
   glbLoader,
+  handleMouseSupport,
   interfaceAnalyseResult,
-  preparedSceneReturn,
+  mouseSupport,
+  preparedConstructReturn,
+  preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport,
   traverseGroup,
 } from '@three-js-studio/three-utils';
 import JEASINGS from 'jeasings';
@@ -23,17 +27,20 @@ import { GLTF } from 'three-stdlib';
  * @param {string} path - The file path to the GLB file to be loaded and processed.
  * @param {THREE.MeshPhysicalMaterial | undefined} [material=undefined] - An optional custom material
  *        to override the default materials in the loaded scene.
+ * @param {preparedConstructReturn} construct - The prepared construct object containing the renderer,
  * @returns {Promise<preparedSceneReturn>} A promise that resolves to an object with utility functions
  *          and properties for managing and interacting with the loaded 3D scene.
  */
 export const glbScene = async (
   path: string,
   material: THREE.MeshPhysicalMaterial | undefined = undefined,
-): Promise<preparedSceneReturn> => {
+  construct: preparedConstructReturn | undefined = undefined,
+): Promise<preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport> => {
   const glbContainer: THREE.Group = new THREE.Group();
   const name = path;
-  let analyseResult: interfaceAnalyseResult | undefined = undefined;
+  let analyseBoundingBoxResult: interfaceAnalyseResult | undefined = undefined;
   let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
+  const mouseHandler: handleMouseSupport = mouseSupport(construct);
 
   /**
    * Asynchronously loads a GLB (Binary glTF) file and adds it to a designated container.
@@ -80,7 +87,6 @@ export const glbScene = async (
    */
   const animate = (_renderer: THREE.WebGLRenderer, scene: THREE.Scene, _camera: THREE.Camera): void => {
     addContent(scene);
-    // if (materialTween !== undefined) materialTween.tweenObject?.update();
   };
 
   /**
@@ -99,7 +105,7 @@ export const glbScene = async (
     });
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!found) {
-      scene.add(glbContainer);
+      if (glbContainer.visible) scene.add(glbContainer);
     }
   };
 
@@ -110,6 +116,7 @@ export const glbScene = async (
    */
   const visible = (vis: boolean): void => {
     glbContainer.visible = vis;
+    construct?.basicControls.scene.remove(glbContainer);
   };
 
   /**
@@ -120,6 +127,15 @@ export const glbScene = async (
    */
   const setMaterial = (material: THREE.MeshPhysicalMaterial): void => {
     if (!actualMaterial) {
+      actualMaterial = material.clone();
+      traverseGroup(glbContainer, (child) => {
+        if ((child as unknown) instanceof THREE.Mesh) {
+          const m = child as THREE.Mesh;
+          if (actualMaterial) {
+            m.material = actualMaterial;
+          }
+        }
+      });
       return;
     }
     const t1 = new JEASINGS.JEasing(actualMaterial.color)
@@ -141,35 +157,33 @@ export const glbScene = async (
    */
   const analyseScene = (): void => {
     console.log('analyseScene -- ');
-    analyseResult = calculateBoundingBox(glbContainer);
-    console.log('analyseScene -- boundingBox', analyseResult);
+    analyseBoundingBoxResult = calculateBoundingBox(glbContainer);
+    console.log('analyseScene -- boundingBox', analyseBoundingBoxResult);
   };
 
   /**
-   * Recalculates the given dimensions based on the provided analysis result.
-   * This function processes and logs the recalculated dimensions for further use.
+   * Recalculates and processes the provided dimension data.
    *
-   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
-   * @returns {void} This function does not return a value.
+   * This function accepts a `dimension` parameter, which contains the
+   * dimension analysis result, and performs necessary computations
+   * or modifications based on the provided data.
+   *
+   * The function logs the operation to the console for debugging purposes.
+   *
+   * @param {interfaceAnalyseResult} dimension - The dimension analysis
+   * result to be recalculated or processed.
+   * @returns {void}
    */
-  const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
-    console.log('reCalculateDimensions -- ', dimensions);
+  const reCalculateDimensions = (dimension: interfaceAnalyseResult): void => {
+    console.log('reCalculateDimensions -- ', dimension);
   };
 
   await glb();
-  analyseScene();
-
   if (material) {
-    actualMaterial = material.clone();
-    traverseGroup(glbContainer, (child) => {
-      if ((child as unknown) instanceof THREE.Mesh) {
-        const m = child as THREE.Mesh;
-        if (actualMaterial) {
-          m.material = actualMaterial;
-        }
-      }
-    });
+    setMaterial(material);
   }
+  analyseScene();
+  const analyseResults = analyse(glbContainer);
 
   console.log('glbContainer-Scene -- ', glbContainer);
 
@@ -177,9 +191,14 @@ export const glbScene = async (
     animate,
     visible,
     updateCameraWindowSize,
-    setMaterial,
-    analyseScene,
-    analyseResult: analyseResult,
     reCalculateDimensions,
+    setMaterial,
+    boundingBox: analyseBoundingBoxResult,
+    groups: analyseResults.groups,
+    materials: analyseResults.materials,
+    meshes: analyseResults.meshes,
+    container: {
+      onClick: mouseHandler.container.onClick,
+    },
   };
 };

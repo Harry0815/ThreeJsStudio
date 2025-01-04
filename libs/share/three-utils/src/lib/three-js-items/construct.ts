@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { GLTF, OrbitControls } from 'three-stdlib';
+import { analyseReturn } from './analyse';
 import { Camera, cameraTypeEnum } from './camera';
 import { createLightHelperReturn, createLightReturn, Light, lightTypeEnum } from './light';
 import { glbLoader } from './loader';
+import { handleMouseSupport } from './mouse';
 import { interfaceAnalyseResult, zeroPosition } from './share';
 
 /**
@@ -52,6 +54,65 @@ export interface prepareOrbitControls {
   minDistance?: number;
   maxDistance?: number;
 }
+
+/**
+ * Interface representing the return object of a prepared scene.
+ * Provides methods for rendering and managing a 3D scene in a WebGL context.
+ */
+export interface preparedSceneReturn {
+  animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
+  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
+  visible: (vis: boolean) => void;
+  reCalculateDimensions: (dimension: interfaceAnalyseResult) => void;
+  boundingBox: interfaceAnalyseResult | undefined;
+}
+
+/**
+ * Interface for handling material support operations.
+ *
+ * Provides methods to set and manage the material used in rendering processes.
+ *
+ * Methods:
+ * - setMaterial: Sets the material to be used.
+ */
+export interface handleMaterialSupport {
+  setMaterial: (_material: THREE.MeshPhysicalMaterial) => void;
+}
+
+/**
+ * Determines if the given object is of type `handleMaterialSupport`.
+ *
+ * This function performs a check to verify if the provided object
+ * includes the `setMaterial` property, which suggests it matches
+ * the expected shape for the `handleMaterialSupport` type.
+ *
+ * @param obj - The object to be checked.
+ * @returns A boolean indicating whether the object is of type `handleMaterialSupport`.
+ */
+export const ishandleMaterialSupport = (obj: unknown): obj is handleMaterialSupport => {
+  if (obj === undefined) {
+    return false;
+  }
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  return (obj as object).setMaterial !== undefined;
+};
+
+/**
+ * The `preparedSceneReturnWithMaterial` type represents a combination of both `preparedSceneReturn`
+ * and `handleMaterialSupport`. This type is used to define an object that encapsulates the properties
+ * and methods involved in preparing a scene and handling material support in a unified way.
+ *
+ * It merges the functionalities of the `preparedSceneReturn`, which contains scene-related
+ * configurations, and `handleMaterialSupport`, which includes material-specific handling and processing.
+ */
+export type preparedSceneReturnWithMaterial = preparedSceneReturn & handleMaterialSupport;
+export type preparedSceneReturnWithMaterialAndAnalysis = preparedSceneReturn & handleMaterialSupport & analyseReturn;
+export type preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport = preparedSceneReturn &
+  handleMaterialSupport &
+  analyseReturn &
+  handleMouseSupport;
+export type preparedConstructWithMouseSupport = preparedConstructReturn & handleMouseSupport;
 
 /**
  * Construct a scene, camera, light, and renderer
@@ -467,16 +528,13 @@ export const prepareConstruct = (
   };
 };
 
-export interface preparedSceneReturn {
-  animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
-  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
-  visible: (vis: boolean) => void;
-  setMaterial: (_material: THREE.MeshPhysicalMaterial) => void;
-  analyseScene: () => void;
-  analyseResult: interfaceAnalyseResult | undefined;
-  reCalculateDimensions: (dimensions: interfaceAnalyseResult) => void;
-}
-
+/**
+ * Constructs a prepared scene object containing methods for managing and analyzing a 3D scene.
+ *
+ * @param {THREE.WebGLRenderer} _renderer - The WebGL renderer responsible for rendering the 3D scene.
+ * @returns {preparedSceneReturn} An object containing various utility methods for interacting with the scene,
+ * including animation, visibility control, dimension updates, scene analysis, and recalculations.
+ */
 const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => {
   /**
    * Updates the dimensions of the camera's viewport and adjusts the renderer size.
@@ -512,35 +570,18 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
   };
 
   /**
-   * Sets the material for an object.
+   * Updates and recalculates dimensions based on the provided input.
    *
-   * @param {THREE.MeshStandardMaterial} _material - The material to apply.
-   * @returns {void}
-   */
-  const setMaterial = (_material: THREE.MeshStandardMaterial): void => {
-    console.log('setMaterial -- ');
-  };
-
-  /**
-   * Analyzes the current scene or context of the application.
-   * This function executes the necessary logic to evaluate and log details about the scene.
+   * This function takes an object of type `interfaceAnalyseResult` and
+   * performs a console log operation, indicating that the dimensions
+   * recalculation process has been triggered.
    *
-   * The function does not return any value and operates entirely through side effects,
-   * such as logging information to the console.
+   * @param {interfaceAnalyseResult} dimension - The input object containing
+   * the details required for recalculating dimensions.
+   * @returns {void} Does not return any value.
    */
-  const analyseScene = (): void => {
-    console.log('anylyseScene -- ');
-  };
-
-  /**
-   * Recalculates the given dimensions based on the provided analysis result.
-   * This function processes and logs the recalculated dimensions for further use.
-   *
-   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
-   * @returns {void} This function does not return a value.
-   */
-  const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
-    console.log('reCalculateDimensions -- ', dimensions);
+  const reCalculateDimensions = (dimension: interfaceAnalyseResult): void => {
+    console.log('reCalculateDimensions -- ', dimension);
   };
 
   console.log('constructItem -- ');
@@ -548,9 +589,7 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     animate,
     visible,
     updateCameraWindowSize,
-    setMaterial,
-    analyseScene,
-    analyseResult: undefined,
     reCalculateDimensions,
+    boundingBox: undefined,
   };
 };

@@ -26,11 +26,6 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
   plane.rotation.x = -Math.PI / 2;
   plane.position.z = 0; //-0.55;
 
-  const analyseResult = {
-    boundingLength: 0,
-    boundingBox: new THREE.Box3(),
-  };
-
   const createRectangularGrid = (
     width: number,
     height: number,
@@ -101,16 +96,6 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
   };
 
   /**
-   * Sets the material for an object.
-   *
-   * @param {THREE.Material} _material - The material to apply.
-   * @returns {void}
-   */
-  const setMaterial = (_material: THREE.Material): void => {
-    console.log('setMaterial -- ');
-  };
-
-  /**
    * Analyzes the current scene or context of the application.
    * This function executes the necessary logic to evaluate and log details about the scene.
    *
@@ -130,8 +115,8 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
    */
   const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
     scene.remove(gridHelper);
-    const gridSizeX = Math.ceil(dimensions.boundingBox.max.x - dimensions.boundingBox.min.x);
-    const gridSizeZ = Math.ceil(dimensions.boundingBox.max.z - dimensions.boundingBox.min.z);
+    const gridSizeX = Math.ceil(dimensions.boundingBox.max.x - dimensions.boundingBox.min.x) + 0.5;
+    const gridSizeZ = Math.ceil(dimensions.boundingBox.max.z - dimensions.boundingBox.min.z) + 0.5;
     console.log('reCalculateDimensions -- ', dimensions);
 
     gridHelper = createRectangularGrid(gridSizeX, gridSizeZ, gridSizeX * 10, gridSizeZ * 10);
@@ -140,16 +125,13 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
   };
 
   analyseScene();
-
   console.log('ground-Scene -- ');
 
   return {
     animate,
     visible,
     updateCameraWindowSize,
-    setMaterial,
-    analyseScene,
-    analyseResult: analyseResult,
     reCalculateDimensions,
+    boundingBox: undefined,
   };
 };
