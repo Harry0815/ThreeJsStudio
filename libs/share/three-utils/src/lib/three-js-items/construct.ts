@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTF, OrbitControls } from 'three-stdlib';
 import { analyseReturn } from './analyse';
 import { Camera, cameraTypeEnum } from './camera';
+import { effects, handleEffectsSupport } from './effects';
 import { createLightHelperReturn, createLightReturn, Light, lightTypeEnum } from './light';
 import { glbLoader } from './loader';
 import { handleMouseSupport } from './mouse';
@@ -65,6 +66,7 @@ export interface preparedSceneReturn {
   visible: (vis: boolean) => void;
   reCalculateDimensions: (dimension: interfaceAnalyseResult) => void;
   boundingBox: interfaceAnalyseResult | undefined;
+  handleEffectsSupport: handleEffectsSupport;
 }
 
 /**
@@ -215,6 +217,7 @@ export const prepareConstruct = (
   const resetConstructedScene = (): void => {
     console.log('resetConstructedScene -- ');
     controls?.reset();
+    construct.scene.rotation.set(0, 0, 0);
   };
 
   resetConstructedScene();
@@ -591,5 +594,6 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
+    handleEffectsSupport: effects(),
   };
 };

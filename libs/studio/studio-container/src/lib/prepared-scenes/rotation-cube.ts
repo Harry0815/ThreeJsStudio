@@ -1,6 +1,7 @@
 import {
   blue,
   createTextLabel,
+  effects,
   glbLoader,
   green,
   interfaceAnalyseResult,
@@ -8,7 +9,7 @@ import {
   lightTypeEnum,
   preparedSceneReturn,
   red,
-  zeroPosition,
+  zeroPosition
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
@@ -183,5 +184,7 @@ export const constructRotationCube = (): preparedSceneReturn => {
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    handleEffectsSupport: effects(),
   };
 };

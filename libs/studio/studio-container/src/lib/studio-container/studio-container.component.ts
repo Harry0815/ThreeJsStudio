@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import {
   construct,
-  hasMouseSupportSupport,
+  handleMouseSupport,
+  hasMouseSupport,
   ishandleMaterialSupport,
   Light,
   lightTypeEnum,
   prepareConstruct,
-  preparedConstructReturn,
+  preparedConstructReturn
 } from '@three-js-studio/three-utils';
 import JEASINGS from 'jeasings';
 import * as THREE from 'three';
@@ -38,8 +39,6 @@ export class StudioContainerComponent implements OnInit {
   #preparedConstruct: preparedConstructReturn | undefined = undefined;
 
   #actualConstructedScene = '';
-  readonly #mouseVektor = new THREE.Vector2();
-  readonly #raycaster = new THREE.Raycaster();
 
   /**
    * Initializes the component and prepares the construct if the canvas element is available.
@@ -71,14 +70,17 @@ export class StudioContainerComponent implements OnInit {
   }
 
   /**
+   * Handles the 'click' event on the host element.
    *
-   * @param _event
+   * @param {MouseEvent} _event - The mouse event triggering the click.
+   *
+   * @return {void}
    */
   @HostListener('click', ['$event'])
   onClick(_event: MouseEvent): void {
     const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
-    if (hasMouseSupportSupport(scene)) {
-      scene.container.onClick(_event);
+    if (hasMouseSupport(scene)) {
+      (scene as handleMouseSupport).container.onClick(_event);
     }
   }
 
@@ -168,6 +170,7 @@ export class StudioContainerComponent implements OnInit {
       });
 
       this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         JEASINGS.update();
       });
     }

@@ -1,15 +1,16 @@
 import {
   analyse,
   calculateBoundingBox,
+  effects,
   glbLoader,
+  handleEffectsSupport,
   handleMouseSupport,
   interfaceAnalyseResult,
   mouseSupport,
   preparedConstructReturn,
   preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport,
-  traverseGroup,
+  traverseGroup
 } from '@three-js-studio/three-utils';
-import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
 
@@ -41,6 +42,7 @@ export const glbScene = async (
   let analyseBoundingBoxResult: interfaceAnalyseResult | undefined = undefined;
   let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
   const mouseHandler: handleMouseSupport = mouseSupport(construct);
+  const effectsHandler: handleEffectsSupport = effects() as handleEffectsSupport;
 
   /**
    * Asynchronously loads a GLB (Binary glTF) file and adds it to a designated container.
@@ -138,14 +140,8 @@ export const glbScene = async (
       });
       return;
     }
-    const t1 = new JEASINGS.JEasing(actualMaterial.color)
-      .to({ r: material.color.r, g: material.color.g, b: material.color.b }, 1000)
-      .easing(JEASINGS.Linear.None)
-      .chain(new JEASINGS.JEasing(actualMaterial).to({ metalness: material.metalness }, 1000))
-      .chain(new JEASINGS.JEasing(actualMaterial).to({ roughness: material.roughness }, 1000))
-      .chain(new JEASINGS.JEasing(actualMaterial).to({ clearcoat: material.clearcoat }, 1000))
-      .chain(new JEASINGS.JEasing(actualMaterial).to({ clearcoatRoughness: material.clearcoatRoughness }, 1000));
-    t1.start();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    effectsHandler.tweenChangeMaterial(actualMaterial, material, 1000);
   };
 
   /**
@@ -200,5 +196,7 @@ export const glbScene = async (
     container: {
       onClick: mouseHandler.container.onClick,
     },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    handleEffectsSupport: effects(),
   };
 };

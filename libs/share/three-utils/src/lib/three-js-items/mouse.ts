@@ -25,7 +25,7 @@ export interface handleMouseSupport {
  * @param {unknown} obj - The object to be checked for mouse support.
  * @returns {boolean} - Returns `true` if the object supports mouse interactions, otherwise `false`.
  */
-export const hasMouseSupportSupport = (obj: unknown): obj is handleMouseSupport => {
+export const hasMouseSupport = (obj: unknown): obj is handleMouseSupport => {
   if (obj === undefined) {
     return false;
   }

@@ -6,3 +6,4 @@ export * from './text';
 export * from './share';
 export * from './analyse';
 export * from './mouse';
+export * from './effects';

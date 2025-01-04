@@ -1,4 +1,4 @@
-import { interfaceAnalyseResult, preparedSceneReturn } from '@three-js-studio/three-utils';
+import { effects, interfaceAnalyseResult, preparedSceneReturn } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 
 /**
@@ -133,5 +133,7 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    handleEffectsSupport: effects(),
   };
 };
