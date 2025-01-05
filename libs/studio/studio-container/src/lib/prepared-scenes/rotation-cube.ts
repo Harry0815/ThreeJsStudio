@@ -9,7 +9,7 @@ import {
   lightTypeEnum,
   preparedSceneReturn,
   red,
-  zeroPosition
+  zeroPosition,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
@@ -32,6 +32,7 @@ export const constructRotationCube = (): preparedSceneReturn => {
   const cube: THREE.Group = new THREE.Group();
   const cubeScene: THREE.Scene = new THREE.Scene();
   const cubeCamera: THREE.OrthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
+  let tweenInProgress = false;
 
   const standardLight = new Light({
     type: lightTypeEnum.Directional,
@@ -143,6 +144,10 @@ export const constructRotationCube = (): preparedSceneReturn => {
    * @returns {void} This function does not return a value.
    */
   const animate = (renderer: THREE.WebGLRenderer, _scene: THREE.Scene, camera: THREE.Camera): void => {
+    if (tweenInProgress) {
+      renderer.render(cubeScene, cubeCamera);
+      return;
+    }
     const quater = new THREE.Quaternion(
       camera.quaternion.x,
       camera.quaternion.y,
@@ -175,16 +180,33 @@ export const constructRotationCube = (): preparedSceneReturn => {
     console.log('reCalculateDimensions -- ', dimensions);
   };
 
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
+    tweenInProgress = value;
+  };
+
   glb();
 
   console.log('cube-Scene -- ', groupCube, cubeScene);
   return {
+    contentSupport: {
+      contentGroup: groupCube,
+      handleEffectsSupport: effects(),
+      tweenInProgress: setTweenInProgress,
+    },
     animate,
     visible,
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    handleEffectsSupport: effects(),
   };
 };

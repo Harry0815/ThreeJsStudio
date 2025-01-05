@@ -22,6 +22,7 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
   const planeGeometry = new THREE.PlaneGeometry(1, 1);
   const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808088, side: THREE.DoubleSide });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  const contentGroup = new THREE.Group();
 
   plane.rotation.x = -Math.PI / 2;
   plane.position.z = 0; //-0.55;
@@ -114,26 +115,42 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
    * @returns {void} This function does not return a value.
    */
   const reCalculateDimensions = (dimensions: interfaceAnalyseResult): void => {
-    scene.remove(gridHelper);
+    contentGroup.clear();
     const gridSizeX = Math.ceil(dimensions.boundingBox.max.x - dimensions.boundingBox.min.x) + 0.5;
     const gridSizeZ = Math.ceil(dimensions.boundingBox.max.z - dimensions.boundingBox.min.z) + 0.5;
     console.log('reCalculateDimensions -- ', dimensions);
 
     gridHelper = createRectangularGrid(gridSizeX, gridSizeZ, gridSizeX * 10, gridSizeZ * 10);
     gridHelper.position.y = dimensions.boundingBox.min.y * 1.2;
-    scene.add(gridHelper);
+    contentGroup.add(gridHelper);
+  };
+
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
   };
 
   analyseScene();
   console.log('ground-Scene -- ');
 
   return {
+    contentSupport: {
+      contentGroup: contentGroup,
+      handleEffectsSupport: effects(),
+      tweenInProgress: setTweenInProgress,
+    },
     animate,
     visible,
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    handleEffectsSupport: effects(),
   };
 };

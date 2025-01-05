@@ -1,3 +1,4 @@
+import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { GLTF, OrbitControls } from 'three-stdlib';
 import { analyseReturn } from './analyse';
@@ -18,10 +19,17 @@ export interface constructReturn {
   content: Map<string, THREE.Group>;
 }
 
+export interface contentSupport {
+  contentGroup: THREE.Group | undefined;
+  handleEffectsSupport: handleEffectsSupport;
+  tweenInProgress: (value: boolean) => void;
+}
+
 /**
  * Interface representing the structure and methods required for constructing and managing a 3D rendering environment.
  */
 export interface preparedConstructReturn {
+  contentSupport: contentSupport;
   basicControls: constructReturn;
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls | undefined;
@@ -61,12 +69,12 @@ export interface prepareOrbitControls {
  * Provides methods for rendering and managing a 3D scene in a WebGL context.
  */
 export interface preparedSceneReturn {
+  contentSupport: contentSupport;
   animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
   updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
   visible: (vis: boolean) => void;
   reCalculateDimensions: (dimension: interfaceAnalyseResult) => void;
   boundingBox: interfaceAnalyseResult | undefined;
-  handleEffectsSupport: handleEffectsSupport;
 }
 
 /**
@@ -172,12 +180,15 @@ export const prepareConstruct = (
   if (!canvasElement) {
     return undefined;
   }
-
+  const renderGroup = new THREE.Group();
   const constructedScenes: Map<string, preparedSceneReturn> = new Map<string, preparedSceneReturn>();
 
   const renderer = new THREE.WebGLRenderer();
   let controls: OrbitControls | undefined;
   renderer.setSize(canvasElement.width, canvasElement.height);
+  let tweenInProgress = false;
+
+  construct.scene.add(renderGroup);
 
   // renderer.shadowMap.enabled = true;
   // renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -199,9 +210,21 @@ export const prepareConstruct = (
   for (const l of construct.lights.values()) {
     const light = l.getLight();
     if (light) {
-      construct.scene.add(light); //  as THREE.Light);
+      construct.scene.add(light);
     }
   }
+
+  const addToRenderGroup = (group: THREE.Group | undefined): void => {
+    if (group) {
+      renderGroup.add(group);
+    }
+  };
+
+  const removeFromRenderGroup = (group: THREE.Group | undefined): void => {
+    if (group) {
+      renderGroup.remove(group);
+    }
+  };
 
   /**
    * Resets the constructed scene to its initial state.
@@ -218,6 +241,7 @@ export const prepareConstruct = (
     console.log('resetConstructedScene -- ');
     controls?.reset();
     construct.scene.rotation.set(0, 0, 0);
+    renderGroup.rotation.set(0, 0, 0);
   };
 
   resetConstructedScene();
@@ -230,6 +254,7 @@ export const prepareConstruct = (
    * @returns {void}
    */
   const addConstructedScene = (key: string, scene: preparedSceneReturn): void => {
+    addToRenderGroup(scene.contentSupport.contentGroup);
     constructedScenes.set(key, scene);
   };
 
@@ -250,6 +275,8 @@ export const prepareConstruct = (
    * @returns {void}
    */
   const deleteConstructedScene = (key: string): void => {
+    const scene = constructedScenes.get(key);
+    removeFromRenderGroup(scene?.contentSupport.contentGroup);
     constructedScenes.delete(key);
   };
 
@@ -284,22 +311,32 @@ export const prepareConstruct = (
     const anim = (): void => {
       // Request the next frame of the animation loop
       requestAnimationFrame(anim);
+      JEASINGS.update();
 
+      // Render the scene using the camera
       if (construct.camera.camera) {
-        renderer.autoClear = false; // Stoppt das automatische Leeren des Canvas
+        renderer.autoClear = false;
         renderer.clear();
-
-        // Render the scene using the camera
         renderer.render(construct.scene, construct.camera.camera);
         renderer.clearDepth();
 
-        for (const l of constructedScenes.values()) {
-          // Update the controls if available
-          l.animate(renderer, construct.scene, construct.camera.camera);
-          // renderer.clearDepth();
+        // setup for tween
+        if (tweenInProgress) {
+          const qa = new THREE.Quaternion();
+          qa.setFromEuler(renderGroup.rotation);
+          qa.invert();
+          construct.camera.camera.quaternion.copy(qa);
         }
-        // Call the provided callback function with the renderer, scene, and camera
+
+        for (const l of constructedScenes.values()) {
+          l.animate(renderer, construct.scene, construct.camera.camera);
+        }
         pfkt(renderer, construct.scene, construct.camera.camera);
+
+        // setup for tween
+        if (tweenInProgress) {
+          controls?.reset();
+        }
       }
     };
     anim();
@@ -406,7 +443,7 @@ export const prepareConstruct = (
   const addContent = (key: string, content: THREE.Group): void => {
     console.log('addContent', key, content);
     construct.content.set(key, content);
-    construct.scene.add(content);
+    renderGroup.add(content);
   };
 
   /**
@@ -434,7 +471,7 @@ export const prepareConstruct = (
     const content = construct.content.get(key);
     if (content) {
       construct.content.delete(key);
-      construct.scene.remove(content);
+      renderGroup.remove(content);
     }
   };
 
@@ -507,8 +544,27 @@ export const prepareConstruct = (
     return new THREE.Group().add(lines);
   };
 
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
+    tweenInProgress = value;
+  };
+
   // Return the prepared construct
   return {
+    contentSupport: {
+      contentGroup: renderGroup,
+      handleEffectsSupport: effects(),
+      tweenInProgress: setTweenInProgress,
+    },
     basicControls: construct,
     controls,
     renderer,
@@ -587,13 +643,30 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     console.log('reCalculateDimensions -- ', dimension);
   };
 
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
+  };
+
   console.log('constructItem -- ');
   return {
+    contentSupport: {
+      contentGroup: undefined,
+      handleEffectsSupport: effects(),
+      tweenInProgress: setTweenInProgress,
+    },
     animate,
     visible,
     updateCameraWindowSize,
     reCalculateDimensions,
     boundingBox: undefined,
-    handleEffectsSupport: effects(),
   };
 };

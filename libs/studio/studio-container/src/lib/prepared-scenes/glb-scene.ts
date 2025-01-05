@@ -9,7 +9,7 @@ import {
   mouseSupport,
   preparedConstructReturn,
   preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport,
-  traverseGroup
+  traverseGroup,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
@@ -42,7 +42,7 @@ export const glbScene = async (
   let analyseBoundingBoxResult: interfaceAnalyseResult | undefined = undefined;
   let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
   const mouseHandler: handleMouseSupport = mouseSupport(construct);
-  const effectsHandler: handleEffectsSupport = effects() as handleEffectsSupport;
+  const effectsHandler: handleEffectsSupport = effects();
 
   /**
    * Asynchronously loads a GLB (Binary glTF) file and adds it to a designated container.
@@ -83,32 +83,12 @@ export const glbScene = async (
    * A function that manages the rendering process for a 3D scene.
    *
    * @param {THREE.WebGLRenderer} _renderer - The WebGL renderer responsible for rendering the scene.
-   * @param {THREE.Scene} scene - The main scene to be rendered (unused in this function).
+   * @param {THREE.Scene} _scene - The main scene to be rendered (unused in this function).
    * @param {THREE.Camera} _camera - The main camera for the scene (unused in this function).
    * @returns {void} This function does not return a value.
    */
-  const animate = (_renderer: THREE.WebGLRenderer, scene: THREE.Scene, _camera: THREE.Camera): void => {
-    addContent(scene);
-  };
-
-  /**
-   * Adds a cube to the given THREE.Scene if it is not already present.
-   *
-   * @param {THREE.Scene} scene - The scene to which the cube will be added.
-   * @returns {void}
-   */
-  const addContent = (scene: THREE.Scene): void => {
-    let found = false;
-    scene.traverse((child) => {
-      if (child.name === glbContainer.name) {
-        found = true;
-        return;
-      }
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!found) {
-      if (glbContainer.visible) scene.add(glbContainer);
-    }
+  const animate = (_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera): void => {
+    // nothing to do
   };
 
   /**
@@ -140,7 +120,7 @@ export const glbScene = async (
       });
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     effectsHandler.tweenChangeMaterial(actualMaterial, material, 1000);
   };
 
@@ -174,6 +154,19 @@ export const glbScene = async (
     console.log('reCalculateDimensions -- ', dimension);
   };
 
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
+  };
+
   await glb();
   if (material) {
     setMaterial(material);
@@ -184,6 +177,11 @@ export const glbScene = async (
   console.log('glbContainer-Scene -- ', glbContainer);
 
   return {
+    contentSupport: {
+      contentGroup: glbContainer,
+      handleEffectsSupport: effectsHandler,
+      tweenInProgress: setTweenInProgress,
+    },
     animate,
     visible,
     updateCameraWindowSize,
@@ -196,7 +194,5 @@ export const glbScene = async (
     container: {
       onClick: mouseHandler.container.onClick,
     },
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    handleEffectsSupport: effects(),
   };
 };

@@ -8,9 +8,8 @@ import {
   Light,
   lightTypeEnum,
   prepareConstruct,
-  preparedConstructReturn
+  preparedConstructReturn,
 } from '@three-js-studio/three-utils';
-import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { glbScene } from '../prepared-scenes/glb-scene';
 import { ground } from '../prepared-scenes/ground';
@@ -170,8 +169,7 @@ export class StudioContainerComponent implements OnInit {
       });
 
       this.#preparedConstruct.animate((_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        JEASINGS.update();
+        // addContent(scene);
       });
     }
     this.#updateRendererSize();
@@ -278,5 +276,21 @@ export class StudioContainerComponent implements OnInit {
     groundFloor?.visible(true);
     scene.visible(true);
     rotationCube?.visible(true);
+
+    // if (this.#preparedConstruct) this.#preparedConstruct.contentSupport.tweenInProgress(true);
+    // if (rotationCube) rotationCube.contentSupport.tweenInProgress(true);
+    // this.#preparedConstruct?.contentSupport.handleEffectsSupport.tweenPrepareFirstPosition(
+    //   this.#preparedConstruct.contentSupport.contentGroup,
+    //   1000,
+    //   (rotation: THREE.Euler | undefined) => {
+    //     if (rotationCube?.contentSupport.contentGroup && rotation) {
+    //       rotationCube.contentSupport.contentGroup.rotation.set(rotation.x, rotation.y, rotation.z);
+    //     }
+    //     if (!rotation) {
+    //       if (this.#preparedConstruct) this.#preparedConstruct.contentSupport.tweenInProgress(false);
+    //       if (rotationCube) rotationCube.contentSupport.tweenInProgress(false);
+    //     }
+    //   },
+    // );
   }
 }

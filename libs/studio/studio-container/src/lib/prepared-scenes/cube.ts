@@ -1,5 +1,6 @@
 import {
   calculateBoundingBox,
+  effects,
   glbLoader,
   interfaceAnalyseResult,
   preparedSceneReturn,
@@ -64,32 +65,12 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * A function that manages the rendering process for a 3D scene.
    *
    * @param {THREE.WebGLRenderer} _renderer - The WebGL renderer responsible for rendering the scene.
-   * @param {THREE.Scene} scene - The main scene to be rendered (unused in this function).
+   * @param {THREE.Scene} _scene - The main scene to be rendered (unused in this function).
    * @param {THREE.Camera} _camera - The main camera for the scene (unused in this function).
    * @returns {void} This function does not return a value.
    */
-  const animate = (_renderer: THREE.WebGLRenderer, scene: THREE.Scene, _camera: THREE.Camera): void => {
-    addContent(scene);
-  };
-
-  /**
-   * Adds a cube to the given THREE.Scene if it is not already present.
-   *
-   * @param {THREE.Scene} scene - The scene to which the cube will be added.
-   * @returns {void}
-   */
-  const addContent = (scene: THREE.Scene): void => {
-    let found = false;
-    scene.traverse((child) => {
-      if (child.name === cube.name) {
-        found = true;
-        return;
-      }
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!found) {
-      scene.add(cube);
-    }
+  const animate = (_renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera): void => {
+    //
   };
 
   /**
@@ -119,12 +100,24 @@ export const cube = async (): Promise<preparedSceneReturn> => {
    * Recalculates the given dimensions based on the provided analysis result.
    * This function processes and logs the recalculated dimensions for further use.
    *
-   * @param {interfaceAnalyseResult} dimensions - The analysis result containing the dimensions to be recalculated.
-   * @param dimension
+   * @param {interfaceAnalyseResult} dimension - The analysis result containing the dimensions to be recalculated.
    * @returns {void} This function does not return a value.
    */
   const reCalculateDimensions = (dimension: interfaceAnalyseResult): void => {
     console.log('reCalculateDimensions -- ', dimension);
+  };
+
+  /**
+   * A function to set the status of whether a tween animation is currently in progress.
+   *
+   * @function
+   * @name setTweenInProgress
+   * @param {boolean} value - The value indicating the tween's progress state.
+   *                          Pass `true` if a tween is in progress and `false` otherwise.
+   * @returns {void} Does not return a value.
+   */
+  const setTweenInProgress = (value: boolean): void => {
+    console.log('setTweenInProgress -- ', value);
   };
 
   await glb();
@@ -133,6 +126,11 @@ export const cube = async (): Promise<preparedSceneReturn> => {
   console.log('cube-Scene -- ', cube);
 
   return {
+    contentSupport: {
+      contentGroup: cube,
+      handleEffectsSupport: effects(),
+      tweenInProgress: setTweenInProgress,
+    },
     animate,
     visible,
     updateCameraWindowSize,
