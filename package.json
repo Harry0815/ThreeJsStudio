@@ -46,6 +46,7 @@
     "@ngxs/storage-plugin": "18.1.6",
     "@ngxs/store": "18.1.6",
     "@ngxs/websocket-plugin": "18.1.6",
+    "@tweenjs/tween.js": "^25.0.0",
     "axios": "^1.6.0",
     "crypto-js": "4.2.0",
     "drizzle-orm": "0.36.4",
