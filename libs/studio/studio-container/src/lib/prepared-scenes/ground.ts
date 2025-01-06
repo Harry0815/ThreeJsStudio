@@ -9,6 +9,7 @@ import * as THREE from 'three';
  * the scene context.
  *
  * @param {THREE.Scene} scene - The Three.js scene to which the ground plane will be added.
+ * @param _scene
  * @returns {preparedSceneReturn} An object containing utility methods for interacting with
  * the ground plane and the scene, including:
  *  - `animate`: A function for managing the rendering loop.
@@ -18,7 +19,7 @@ import * as THREE from 'three';
  *  - `analyseScene`: A function for analyzing and logging details of the current scene.
  *  - `analyseResult`: An object storing results about the analysis of the scene.
  */
-export const ground = (scene: THREE.Scene): preparedSceneReturn => {
+export const ground = (_scene: THREE.Scene): preparedSceneReturn => {
   const planeGeometry = new THREE.PlaneGeometry(1, 1);
   const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808088, side: THREE.DoubleSide });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -125,19 +126,6 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
     contentGroup.add(gridHelper);
   };
 
-  /**
-   * A function to set the status of whether a tween animation is currently in progress.
-   *
-   * @function
-   * @name setTweenInProgress
-   * @param {boolean} value - The value indicating the tween's progress state.
-   *                          Pass `true` if a tween is in progress and `false` otherwise.
-   * @returns {void} Does not return a value.
-   */
-  const setTweenInProgress = (value: boolean): void => {
-    console.log('setTweenInProgress -- ', value);
-  };
-
   analyseScene();
   console.log('ground-Scene -- ');
 
@@ -145,7 +133,6 @@ export const ground = (scene: THREE.Scene): preparedSceneReturn => {
     contentSupport: {
       contentGroup: contentGroup,
       handleEffectsSupport: effects(),
-      tweenInProgress: setTweenInProgress,
     },
     animate,
     visible,

@@ -107,19 +107,6 @@ export const cube = async (): Promise<preparedSceneReturn> => {
     console.log('reCalculateDimensions -- ', dimension);
   };
 
-  /**
-   * A function to set the status of whether a tween animation is currently in progress.
-   *
-   * @function
-   * @name setTweenInProgress
-   * @param {boolean} value - The value indicating the tween's progress state.
-   *                          Pass `true` if a tween is in progress and `false` otherwise.
-   * @returns {void} Does not return a value.
-   */
-  const setTweenInProgress = (value: boolean): void => {
-    console.log('setTweenInProgress -- ', value);
-  };
-
   await glb();
   analyseScene();
 
@@ -129,7 +116,6 @@ export const cube = async (): Promise<preparedSceneReturn> => {
     contentSupport: {
       contentGroup: cube,
       handleEffectsSupport: effects(),
-      tweenInProgress: setTweenInProgress,
     },
     animate,
     visible,

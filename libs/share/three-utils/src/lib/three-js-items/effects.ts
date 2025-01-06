@@ -7,11 +7,7 @@ export interface handleEffectsSupport {
     destMaterial: THREE.MeshPhysicalMaterial | undefined,
     duration: number,
   ) => void;
-  tweenPrepareFirstPosition: (
-    scene: THREE.Scene | THREE.Group | undefined,
-    duration: number,
-    callback: (rotation: THREE.Euler | undefined) => void,
-  ) => void;
+  tweenPrepareFirstPosition: (models: THREE.Object3D[], duration: number) => void;
 }
 
 export const hasEffectsSupport = (obj: unknown): obj is handleEffectsSupport => {
@@ -41,26 +37,18 @@ export const effects = (): handleEffectsSupport => {
     }
   };
 
-  const prepareFirstPosition = (
-    scene: THREE.Scene | THREE.Group | undefined,
-    duration: number,
-    callback: (rotation: THREE.Euler | undefined) => void,
-  ): void => {
-    if (!scene) {
-      return;
-    }
+  const prepareFirstPosition = (models: THREE.Object3D[], duration: number): void => {
     const rotation = new THREE.Euler(0, 0, 0);
     const tween = new JEASINGS.JEasing(rotation)
       .to({ x: Math.PI * 0.2, y: Math.PI * -0.15, z: 0 }, duration)
       .easing(JEASINGS.Sinusoidal.InOut)
       .onComplete(() => {
-        callback(undefined);
         console.log('completed');
       })
       .onUpdate(() => {
-        const qa = new THREE.Quaternion().setFromEuler(rotation);
-        scene.rotation.setFromQuaternion(qa);
-        callback(rotation);
+        for (const model of models) {
+          model.rotation.set(rotation.x, rotation.y, rotation.z);
+        }
       });
     tween.start();
   };

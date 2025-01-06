@@ -277,20 +277,13 @@ export class StudioContainerComponent implements OnInit {
     scene.visible(true);
     rotationCube?.visible(true);
 
-    // if (this.#preparedConstruct) this.#preparedConstruct.contentSupport.tweenInProgress(true);
-    // if (rotationCube) rotationCube.contentSupport.tweenInProgress(true);
-    // this.#preparedConstruct?.contentSupport.handleEffectsSupport.tweenPrepareFirstPosition(
-    //   this.#preparedConstruct.contentSupport.contentGroup,
-    //   1000,
-    //   (rotation: THREE.Euler | undefined) => {
-    //     if (rotationCube?.contentSupport.contentGroup && rotation) {
-    //       rotationCube.contentSupport.contentGroup.rotation.set(rotation.x, rotation.y, rotation.z);
-    //     }
-    //     if (!rotation) {
-    //       if (this.#preparedConstruct) this.#preparedConstruct.contentSupport.tweenInProgress(false);
-    //       if (rotationCube) rotationCube.contentSupport.tweenInProgress(false);
-    //     }
-    //   },
-    // );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    if (this.#preparedConstruct.contentSupport.contentGroup && rotationCube?.contentSupport.contentGroup) {
+      this.#preparedConstruct?.contentSupport.handleEffectsSupport.tweenPrepareFirstPosition(
+        [this.#preparedConstruct.contentSupport.contentGroup, rotationCube.contentSupport.contentGroup],
+        1000,
+      );
+    }
   }
 }

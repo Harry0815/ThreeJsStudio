@@ -19,10 +19,12 @@ export interface constructReturn {
   content: Map<string, THREE.Group>;
 }
 
+/**
+ * Interface for handling effects support operations.
+ */
 export interface contentSupport {
   contentGroup: THREE.Group | undefined;
   handleEffectsSupport: handleEffectsSupport;
-  tweenInProgress: (value: boolean) => void;
 }
 
 /**
@@ -186,7 +188,6 @@ export const prepareConstruct = (
   const renderer = new THREE.WebGLRenderer();
   let controls: OrbitControls | undefined;
   renderer.setSize(canvasElement.width, canvasElement.height);
-  let tweenInProgress = false;
 
   construct.scene.add(renderGroup);
 
@@ -317,26 +318,14 @@ export const prepareConstruct = (
       if (construct.camera.camera) {
         renderer.autoClear = false;
         renderer.clear();
+        controls?.update();
         renderer.render(construct.scene, construct.camera.camera);
         renderer.clearDepth();
-
-        // setup for tween
-        if (tweenInProgress) {
-          const qa = new THREE.Quaternion();
-          qa.setFromEuler(renderGroup.rotation);
-          qa.invert();
-          construct.camera.camera.quaternion.copy(qa);
-        }
 
         for (const l of constructedScenes.values()) {
           l.animate(renderer, construct.scene, construct.camera.camera);
         }
         pfkt(renderer, construct.scene, construct.camera.camera);
-
-        // setup for tween
-        if (tweenInProgress) {
-          controls?.reset();
-        }
       }
     };
     anim();
@@ -544,26 +533,11 @@ export const prepareConstruct = (
     return new THREE.Group().add(lines);
   };
 
-  /**
-   * A function to set the status of whether a tween animation is currently in progress.
-   *
-   * @function
-   * @name setTweenInProgress
-   * @param {boolean} value - The value indicating the tween's progress state.
-   *                          Pass `true` if a tween is in progress and `false` otherwise.
-   * @returns {void} Does not return a value.
-   */
-  const setTweenInProgress = (value: boolean): void => {
-    console.log('setTweenInProgress -- ', value);
-    tweenInProgress = value;
-  };
-
   // Return the prepared construct
   return {
     contentSupport: {
       contentGroup: renderGroup,
       handleEffectsSupport: effects(),
-      tweenInProgress: setTweenInProgress,
     },
     basicControls: construct,
     controls,
@@ -643,25 +617,11 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
     console.log('reCalculateDimensions -- ', dimension);
   };
 
-  /**
-   * A function to set the status of whether a tween animation is currently in progress.
-   *
-   * @function
-   * @name setTweenInProgress
-   * @param {boolean} value - The value indicating the tween's progress state.
-   *                          Pass `true` if a tween is in progress and `false` otherwise.
-   * @returns {void} Does not return a value.
-   */
-  const setTweenInProgress = (value: boolean): void => {
-    console.log('setTweenInProgress -- ', value);
-  };
-
   console.log('constructItem -- ');
   return {
     contentSupport: {
       contentGroup: undefined,
       handleEffectsSupport: effects(),
-      tweenInProgress: setTweenInProgress,
     },
     animate,
     visible,
