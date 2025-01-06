@@ -77,9 +77,32 @@ export class StudioContainerComponent implements OnInit {
    */
   @HostListener('click', ['$event'])
   onClick(_event: MouseEvent): void {
-    const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
     if (hasMouseSupport(scene)) {
       (scene as handleMouseSupport).container.onClick(_event);
+    }
+    scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
+    if (hasMouseSupport(scene)) {
+      (scene as handleMouseSupport).container.onClick(_event);
+    }
+  }
+
+  /**
+   * Handles the 'move' event on the host element.
+   *
+   * @param {MouseEvent} _event - The mouse event triggering the move.
+   *
+   * @return {void}
+   */
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(_event: MouseEvent): void {
+    let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
+    if (hasMouseSupport(scene)) {
+      (scene as handleMouseSupport).container.onMouseMove(_event);
+    }
+    scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
+    if (hasMouseSupport(scene)) {
+      (scene as handleMouseSupport).container.onMouseMove(_event);
     }
   }
 
@@ -254,11 +277,17 @@ export class StudioContainerComponent implements OnInit {
       scene = await glbScene(
         key,
         new THREE.MeshPhysicalMaterial({
+          // color: 0xafcb10,
+          // roughness: 0.5,
+          // clearcoat: 1.0,
+          // clearcoatRoughness: 0.5,
+          // metalness: 0.5,
+
           color: 0xafcb10,
-          roughness: 0.5,
-          clearcoat: 1.0,
-          clearcoatRoughness: 0.5,
-          metalness: 0.5,
+          roughness: 0.3,
+          clearcoat: 1,
+          clearcoatRoughness: 1,
+          metalness: 0.7,
         }),
         this.#preparedConstruct,
       );

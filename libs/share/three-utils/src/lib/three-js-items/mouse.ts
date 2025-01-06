@@ -2,19 +2,20 @@ import * as THREE from 'three';
 import { preparedConstructReturn } from './construct';
 
 /**
- * Interface representing support for handling mouse-related events.
+ * Represents an interface for handling mouse event support.
  *
- * This interface includes configurations for mouse interactions,
- * such as handling click events on a specific container.
+ * This interface defines properties for dealing with mouse events
+ * such as clicks and movement within a specified container.
  *
- * Properties:
- * - container: Object that contains the mouse event handling logic for the designated container.
- *   - onClick: A function that is triggered when a click event occurs within the container.
- *              It receives a MouseEvent object as its argument.
+ * @interface handleMouseSupport
+ * @property {Object} container - Object containing event handling functions for mouse interactions.
+ * @property {Function} container.onClick - Function to handle the `click` event triggered when the mouse is clicked.
+ * @property {Function} container.onMouseMove - Function to handle the `mousemove` event triggered when the mouse moves.
  */
 export interface handleMouseSupport {
   container: {
     onClick: (event: MouseEvent) => void;
+    onMouseMove: (event: MouseEvent) => void;
   };
 }
 
@@ -49,7 +50,7 @@ export const hasMouseSupport = (obj: unknown): obj is handleMouseSupport => {
  *        elements for the 3D scene, such as the camera, renderer, and scene setup. If undefined,
  *        a default onClick handler is provided.
  * @returns {handleMouseSupport} An object containing a `container` property with an `onClick`
- *          event handler, enabling interaction with 3D objects in the scene.
+ *          and mouseMove event handler, enabling interaction with 3D objects in the scene.
  */
 export const mouseSupport = (prep: preparedConstructReturn | undefined): handleMouseSupport => {
   if (!prep) {
@@ -58,12 +59,16 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
         onClick: (_event: MouseEvent): void => {
           //
         },
+        onMouseMove: (_event: MouseEvent): void => {
+          //
+        },
       },
     };
   }
 
   const raycaster = new THREE.Raycaster();
   const mouseVector = new THREE.Vector2();
+  const mouseVectorMove = new THREE.Vector2();
 
   const onClick = (event: MouseEvent): void => {
     if (prep.basicControls.camera.camera) {
@@ -76,7 +81,26 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
       if (intersects.length > 0) {
         for (const m of intersects) {
           if ((m.object as unknown) instanceof THREE.Mesh) {
-            console.log('Mesh', m.object);
+            console.log('Mesh click', m.object);
+          }
+        }
+      }
+    }
+  };
+
+  const onMouseMove = (event: MouseEvent): void => {
+    if (prep.basicControls.camera.camera) {
+      const rect = prep.renderer.domElement.getBoundingClientRect();
+      mouseVectorMove.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseVectorMove.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouseVectorMove, prep.basicControls.camera.camera);
+      const intersects = raycaster.intersectObject(prep.basicControls.scene, true);
+      if (intersects.length > 0) {
+        for (const m of intersects) {
+          if ((m.object as unknown) instanceof THREE.Mesh) {
+            console.log('Mesh move', m.object.name);
+            break;
           }
         }
       }
@@ -86,6 +110,7 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
   return {
     container: {
       onClick: onClick,
+      onMouseMove: onMouseMove,
     },
   };
 };

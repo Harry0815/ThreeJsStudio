@@ -44,8 +44,6 @@ export const cube = async (): Promise<preparedSceneReturn> => {
       if (gltf?.scene) {
         cube.add(gltf.scene);
         cube.name = name;
-
-        // setMaterial(new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5, metalness: 0.5 }));
       }
     });
   };

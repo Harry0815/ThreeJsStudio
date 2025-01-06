@@ -98,7 +98,11 @@ export const glbScene = async (
    */
   const visible = (vis: boolean): void => {
     glbContainer.visible = vis;
-    construct?.basicControls.scene.remove(glbContainer);
+    if (!vis) {
+      if (construct?.contentSupport.contentGroup) construct.contentSupport.contentGroup.remove(glbContainer);
+    } else {
+      if (construct?.contentSupport.contentGroup) construct.contentSupport.contentGroup.add(glbContainer);
+    }
   };
 
   /**
@@ -179,6 +183,7 @@ export const glbScene = async (
     meshes: analyseResults.meshes,
     container: {
       onClick: mouseHandler.container.onClick,
+      onMouseMove: mouseHandler.container.onMouseMove,
     },
   };
 };
