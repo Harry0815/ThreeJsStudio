@@ -1,5 +1,10 @@
 import * as THREE from 'three';
-import { preparedConstructReturn } from './construct';
+import {
+  handleMaterialSupport,
+  ishandleMaterialSupport,
+  preparedConstructReturn,
+  preparedSceneReturn,
+} from './construct';
 
 /**
  * Represents an interface for handling mouse event support.
@@ -14,8 +19,8 @@ import { preparedConstructReturn } from './construct';
  */
 export interface handleMouseSupport {
   container: {
-    onClick: (event: MouseEvent) => void;
-    onMouseMove: (event: MouseEvent) => void;
+    onClick: (event: MouseEvent, scene: preparedSceneReturn) => void;
+    onMouseMove: (event: MouseEvent, scene: preparedSceneReturn) => void;
   };
 }
 
@@ -67,10 +72,24 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
   }
 
   const raycaster = new THREE.Raycaster();
+  const raycasterMove = new THREE.Raycaster();
   const mouseVector = new THREE.Vector2();
   const mouseVectorMove = new THREE.Vector2();
 
-  const onClick = (event: MouseEvent): void => {
+  let storedMeshUUID = '';
+
+  /**
+   * Handles the onClick event for processing mouse interactions with the scene.
+   *
+   * This function calculates the mouse position in normalized device coordinates
+   * (NDC) relative to the rendering area and uses a raycaster to detect intersections
+   * with objects in the scene. If intersections are found, it handles those that
+   * involve THREE.Mesh objects.
+   *
+   * @param event The MouseEvent triggered by clicking in the rendering area.
+   * @param _scene An object containing the prepared scene data, used for interaction logic.
+   */
+  const onClick = (event: MouseEvent, _scene: preparedSceneReturn): void => {
     if (prep.basicControls.camera.camera) {
       const rect = prep.renderer.domElement.getBoundingClientRect();
       mouseVector.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -88,21 +107,85 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
     }
   };
 
-  const onMouseMove = (event: MouseEvent): void => {
+  /**
+   * Handles the mouse movement event on the canvas to facilitate interactive scene manipulation.
+   *
+   * This method calculates the position of the mouse relative to the canvas, updates the raycaster
+   * to detect intersections with objects in the scene, and performs various operations such as
+   * highlighting objects, resetting materials, and managing interaction states. The function checks
+   * for specific object interactions using the mouse and adjusts the corresponding visual properties
+   * of the objects in the 3D scene.
+   *
+   * @param {MouseEvent} event - The mouse movement event containing information about the cursor's
+   * position and the interaction context.
+   * @param {preparedSceneReturn} scene - The prepared scene object containing the necessary setup
+   * for rendering and interaction, including materials and camera positioning.
+   *
+   * @returns {void} No return value. The function modifies the visual properties of the objects in
+   * the scene based on mouse movement and raycaster intersection.
+   */
+  const onMouseMove = (event: MouseEvent, scene: preparedSceneReturn): void => {
     if (prep.basicControls.camera.camera) {
       const rect = prep.renderer.domElement.getBoundingClientRect();
       mouseVectorMove.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouseVectorMove.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      raycaster.setFromCamera(mouseVectorMove, prep.basicControls.camera.camera);
-      const intersects = raycaster.intersectObject(prep.basicControls.scene, true);
+      raycasterMove.setFromCamera(mouseVectorMove, prep.basicControls.camera.camera);
+      const intersects = raycasterMove.intersectObject(prep.basicControls.scene, true);
       if (intersects.length > 0) {
         for (const m of intersects) {
           if ((m.object as unknown) instanceof THREE.Mesh) {
-            console.log('Mesh move', m.object.name);
-            break;
+            const mesh = m.object as THREE.Mesh;
+            if (mesh.uuid === storedMeshUUID) {
+              return;
+            }
+            storedMeshUUID = mesh.uuid;
           }
         }
+      } else {
+        if (storedMeshUUID === '') {
+          return;
+        }
+      }
+
+      // Reset color
+      if (ishandleMaterialSupport(scene)) {
+        const resetMaterial = (scene as handleMaterialSupport).actualMaterial;
+        if (resetMaterial) {
+          prep.basicControls.scene.traverse((object) => {
+            if (object instanceof THREE.Mesh) {
+              if (object.material instanceof Array) {
+                for (let i = 0; i < object.material.length; i++) {
+                  object.material[i] = resetMaterial as THREE.Material;
+                }
+              } else {
+                object.material = resetMaterial as THREE.Material;
+              }
+            }
+          });
+        }
+
+        if (intersects.length > 0) {
+          for (const m of intersects) {
+            if ((m.object as unknown) instanceof THREE.Mesh) {
+              const mesh = m.object as THREE.Mesh;
+              if (!mesh.visible) continue;
+              if (resetMaterial) {
+                const markMaterial = resetMaterial.clone();
+                markMaterial.color.addScalar(1);
+                if (mesh.material instanceof Array) {
+                  for (let i = 0; i < mesh.material.length; i++) {
+                    mesh.material[i] = markMaterial;
+                  }
+                } else {
+                  mesh.material = markMaterial;
+                }
+                break;
+              }
+            }
+          }
+        }
+        storedMeshUUID = '';
       }
     }
   };
@@ -112,5 +195,34 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
       onClick: onClick,
       onMouseMove: onMouseMove,
     },
+  };
+};
+
+/**
+ * Enhances the given scene with mouse support if not already present.
+ *
+ * This function checks whether the provided scene already includes mouse support.
+ * If mouse support is absent and a construct is provided, it merges the scene
+ * with the necessary mouse support features generated from the construct.
+ * If no construct is provided, the original scene is returned unmodified.
+ *
+ * @param {preparedSceneReturn} scene - The prepared scene to be evaluated and potentially enhanced.
+ * @param {preparedConstructReturn | undefined} construct - An optional construct used to generate
+ *                                                          mouse support features for the scene.
+ * @returns {preparedSceneReturn} - The resulting scene, enhanced with mouse support if applicable.
+ */
+export const addMouseSupport = (
+  scene: preparedSceneReturn,
+  construct: preparedConstructReturn | undefined,
+): preparedSceneReturn => {
+  if (hasMouseSupport(scene)) {
+    return scene;
+  }
+  if (!construct) {
+    return scene;
+  }
+  return {
+    ...scene,
+    ...mouseSupport(construct),
   };
 };

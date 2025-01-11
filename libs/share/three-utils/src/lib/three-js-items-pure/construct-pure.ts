@@ -9,11 +9,13 @@ const itemTypes = {
   material: 5,
 } as const;
 
-interface studioItem {
+export interface studioItem {
   name: string;
+  type: number;
+  details: object;
 }
 
-interface studioActionItem extends studioItem {
+export interface studioActionItem extends studioItem {
   active: boolean;
 }
 
@@ -24,7 +26,7 @@ interface constructPure {
   studioActionThreeItems: studioItem[]; // Array of studio items
 }
 
-interface studioRoom extends constructPure {
+export interface studioRoom extends constructPure {
   name: string;
   type: number;
   width: number;
@@ -32,13 +34,20 @@ interface studioRoom extends constructPure {
   length: number;
 }
 
+export interface roomFunctions {
+  init: () => void;
+  reset: () => void;
+  animate: () => void;
+  updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
+}
+
+export type studioRoomFunctions = studioRoom & roomFunctions;
+
 type renderer<T> = {
-  type: number;
   renderer: T | undefined;
 };
 
 type camera<T> = {
-  type: number;
   fov: number;
   aspect: number;
   near: number;
@@ -48,7 +57,6 @@ type camera<T> = {
 };
 
 type light<T> = {
-  type: number;
   color: number;
   intensity: number;
   position: THREE.Vector3;
@@ -56,17 +64,15 @@ type light<T> = {
 };
 
 type scene<T> = {
-  type: number;
   scene: T;
 };
 
 type material<T> = {
-  type: number;
   color: number;
   materialObject: T;
 };
 
-const createSystem = (
+export const createSystem = (
   name: string,
   width: number,
   height: number,
@@ -85,14 +91,21 @@ const createSystem = (
   };
 };
 
-const addStudioItem = (system: studioRoom, item: studioItem): studioRoom => {
+export const addFunctionToSystem = (system: studioRoom, functions: roomFunctions): studioRoomFunctions => {
+  return {
+    ...system,
+    ...functions,
+  };
+};
+
+export const addStudioItem = (system: studioRoom, item: studioItem): studioRoom => {
   return {
     ...system,
     studioThreeItems: [...system.studioThreeItems, item],
   };
 };
 
-const addStudioActionItem = (system: studioRoom, item: studioActionItem): studioRoom => {
+export const addStudioActionItem = (system: studioRoom, item: studioActionItem): studioRoom => {
   return {
     ...system,
     studioActionThreeItems: [...system.studioActionThreeItems, item],
@@ -105,24 +118,24 @@ let construct = createSystem('ThreeJS', 800, 600, 800, undefined);
 // add (passive items) renderer, scene, material
 construct = addStudioItem(construct, {
   name: 'Renderer',
+  type: itemTypes.renderer,
   details: {
-    type: itemTypes.renderer,
     renderer: undefined,
   } as renderer<THREE.WebGLRenderer>,
 } as studioItem);
 
 construct = addStudioItem(construct, {
   name: 'scene 1',
+  type: itemTypes.scene,
   details: {
-    type: itemTypes.scene,
     scene: new THREE.Scene(),
   } as scene<THREE.Scene>,
 } as studioItem);
 
 construct = addStudioItem(construct, {
   name: 'material 1',
+  type: itemTypes.material,
   details: {
-    type: itemTypes.material,
     color: 0xffffff,
     materialObject: new THREE.MeshPhysicalMaterial(),
   } as material<THREE.MeshPhysicalMaterial>,
@@ -132,8 +145,8 @@ construct = addStudioItem(construct, {
 construct = addStudioActionItem(construct, {
   name: 'camera 1',
   active: false,
+  type: itemTypes.camera,
   details: {
-    type: itemTypes.camera,
     fov: 75,
     aspect: construct.width / construct.height,
     near: 0.1,
@@ -146,12 +159,42 @@ construct = addStudioActionItem(construct, {
 construct = addStudioActionItem(construct, {
   name: 'light 1',
   active: false,
+  type: itemTypes.light,
   details: {
-    type: itemTypes.light,
     color: 0xffffff,
     intensity: 1,
     lightObject: new THREE.AmbientLight(0xffffff),
   } as light<THREE.AmbientLight>,
 } as studioActionItem);
 
+const functions = {
+  init: () => {
+    console.log('init');
+    if (!construct.canvasElement) {
+      throw new Error('Canvas element is not defined');
+    }
+    const renderer = construct.studioThreeItems.find((item) => item.type === itemTypes.renderer);
+    if (renderer) {
+      (renderer.details as renderer<THREE.WebGLRenderer>).renderer = new THREE.WebGLRenderer({
+        canvas: construct.canvasElement,
+      });
+    }
+  },
+  reset: () => {
+    console.log('reset');
+  },
+  animate: () => {
+    console.log('animate');
+  },
+  updateCameraWindowSize: (newWidth: number, newHeight: number): void => {
+    construct.height = newHeight;
+    construct.width = newWidth;
+    console.log('updateCameraWindowSize', newWidth, newHeight);
+  },
+} as roomFunctions;
+
+construct = addFunctionToSystem(construct, functions);
+
+console.log(construct);
+functions.updateCameraWindowSize(100, 100);
 console.log(construct);

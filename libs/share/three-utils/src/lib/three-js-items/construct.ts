@@ -88,6 +88,7 @@ export interface preparedSceneReturn {
  * - setMaterial: Sets the material to be used.
  */
 export interface handleMaterialSupport {
+  actualMaterial: THREE.MeshPhysicalMaterial | undefined;
   setMaterial: (_material: THREE.MeshPhysicalMaterial) => void;
 }
 

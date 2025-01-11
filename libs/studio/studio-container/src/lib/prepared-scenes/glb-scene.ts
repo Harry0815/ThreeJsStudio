@@ -1,14 +1,12 @@
 import {
-  analyse,
   calculateBoundingBox,
   effects,
   glbLoader,
   handleEffectsSupport,
-  handleMouseSupport,
   interfaceAnalyseResult,
-  mouseSupport,
   preparedConstructReturn,
-  preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport,
+  preparedSceneReturn,
+  preparedSceneReturnWithMaterial,
   traverseGroup,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
@@ -36,12 +34,11 @@ export const glbScene = async (
   path: string,
   material: THREE.MeshPhysicalMaterial | undefined = undefined,
   construct: preparedConstructReturn | undefined = undefined,
-): Promise<preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport> => {
+): Promise<preparedSceneReturnWithMaterial> => {
   const glbContainer: THREE.Group = new THREE.Group();
   const name = path;
   let analyseBoundingBoxResult: interfaceAnalyseResult | undefined = undefined;
   let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
-  const mouseHandler: handleMouseSupport = mouseSupport(construct);
   const effectsHandler: handleEffectsSupport = effects();
 
   /**
@@ -163,11 +160,8 @@ export const glbScene = async (
     setMaterial(material);
   }
   analyseScene();
-  const analyseResults = analyse(glbContainer);
 
-  console.log('glbContainer-Scene -- ', glbContainer);
-
-  return {
+  const data = {
     contentSupport: {
       contentGroup: glbContainer,
       handleEffectsSupport: effectsHandler,
@@ -177,13 +171,10 @@ export const glbScene = async (
     updateCameraWindowSize,
     reCalculateDimensions,
     setMaterial,
+    actualMaterial,
     boundingBox: analyseBoundingBoxResult,
-    groups: analyseResults.groups,
-    materials: analyseResults.materials,
-    meshes: analyseResults.meshes,
-    container: {
-      onClick: mouseHandler.container.onClick,
-      onMouseMove: mouseHandler.container.onMouseMove,
-    },
-  };
+  } as preparedSceneReturnWithMaterial;
+
+  console.log('glbContainer-Scene -- ', glbContainer);
+  return data;
 };

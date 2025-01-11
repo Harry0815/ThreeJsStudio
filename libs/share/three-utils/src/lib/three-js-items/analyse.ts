@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { preparedConstructReturn, preparedSceneReturn } from './construct';
 import { traverseGroup } from './share';
 
 /**
@@ -12,9 +13,11 @@ import { traverseGroup } from './share';
  * @property {Map<string, THREE.Material>} materials - A map that associates string identifiers with THREE.Material objects.
  */
 export interface analyseReturn {
-  groups: Map<string, THREE.Group>;
-  meshes: Map<string, THREE.Mesh>;
-  materials: Map<string, THREE.Material>;
+  analyse: {
+    groups: Map<string, THREE.Group>;
+    meshes: Map<string, THREE.Mesh>;
+    materials: Map<string, THREE.Material>;
+  };
 }
 
 export const analyse = (model: THREE.Group): analyseReturn => {
@@ -51,8 +54,35 @@ export const analyse = (model: THREE.Group): analyseReturn => {
   console.log('objMaterials', mapMaterials.keys());
 
   return {
-    groups: mapGroups,
-    meshes: mapMeshes,
-    materials: mapMaterials,
+    analyse: {
+      groups: mapGroups,
+      meshes: mapMeshes,
+      materials: mapMaterials,
+    },
   };
+};
+
+export const hasAnalyseSupport = (obj: unknown): obj is analyseReturn => {
+  if (obj === undefined) {
+    return false;
+  }
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  return (obj as object).analyse !== undefined;
+};
+
+export const addAnalyseSupport = (
+  scene: preparedSceneReturn,
+  construct: preparedConstructReturn | undefined,
+): preparedSceneReturn => {
+  if (hasAnalyseSupport(scene)) {
+    return scene;
+  }
+  if (construct && scene.contentSupport.contentGroup) {
+    return {
+      ...scene,
+      ...analyse(scene.contentSupport.contentGroup),
+    };
+  }
+  return scene;
 };

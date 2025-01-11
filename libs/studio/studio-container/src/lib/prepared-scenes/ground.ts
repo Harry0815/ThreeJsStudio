@@ -8,8 +8,7 @@ import * as THREE from 'three';
  * interacting with the ground plane, such as changing its visibility, setting its material, and analyzing
  * the scene context.
  *
- * @param {THREE.Scene} scene - The Three.js scene to which the ground plane will be added.
- * @param _scene
+ * @param {THREE.Scene} _scene - The Three.js scene to which the ground plane will be added.
  * @returns {preparedSceneReturn} An object containing utility methods for interacting with
  * the ground plane and the scene, including:
  *  - `animate`: A function for managing the rendering loop.

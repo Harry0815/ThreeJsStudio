@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import {
+  addAnalyseSupport,
+  addMouseSupport,
   construct,
   handleMouseSupport,
   hasMouseSupport,
@@ -9,6 +11,8 @@ import {
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
+  preparedSceneReturn,
+  preparedSceneReturnWithMaterial,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { glbScene } from '../prepared-scenes/glb-scene';
@@ -79,11 +83,11 @@ export class StudioContainerComponent implements OnInit {
   onClick(_event: MouseEvent): void {
     let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
     if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onClick(_event);
+      (scene as handleMouseSupport).container.onClick(_event, scene);
     }
     scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
     if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onClick(_event);
+      (scene as handleMouseSupport).container.onClick(_event, scene);
     }
   }
 
@@ -97,12 +101,14 @@ export class StudioContainerComponent implements OnInit {
   @HostListener('mousemove', ['$event'])
   onMouseMove(_event: MouseEvent): void {
     let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
-    if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onMouseMove(_event);
-    }
-    scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
-    if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onMouseMove(_event);
+    if (ishandleMaterialSupport(scene)) {
+      if (hasMouseSupport(scene)) {
+        (scene as handleMouseSupport).container.onMouseMove(_event, scene);
+      }
+      scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
+      if (hasMouseSupport(scene)) {
+        (scene as handleMouseSupport).container.onMouseMove(_event, scene);
+      }
     }
   }
 
@@ -272,25 +278,25 @@ export class StudioContainerComponent implements OnInit {
    */
   async #sitchToScene(key: string): Promise<void> {
     this.#preparedConstruct?.switchAllConstructedScenes(false);
-    let scene = this.#preparedConstruct?.getConstructedScene(key);
+    let scene: preparedSceneReturn | undefined = this.#preparedConstruct?.getConstructedScene(key);
     if (!scene) {
-      scene = await glbScene(
-        key,
-        new THREE.MeshPhysicalMaterial({
-          // color: 0xafcb10,
-          // roughness: 0.5,
-          // clearcoat: 1.0,
-          // clearcoatRoughness: 0.5,
-          // metalness: 0.5,
-
-          color: 0xafcb10,
-          roughness: 0.3,
-          clearcoat: 1,
-          clearcoatRoughness: 1,
-          metalness: 0.7,
-        }),
-        this.#preparedConstruct,
-      );
+      if (key.includes('lotus')) {
+        scene = await glbScene(key, undefined, this.#preparedConstruct);
+      } else {
+        scene = await glbScene(
+          key,
+          new THREE.MeshPhysicalMaterial({
+            color: 0xafcb10,
+            roughness: 0.3,
+            clearcoat: 1,
+            clearcoatRoughness: 1,
+            metalness: 0.7,
+          }),
+          this.#preparedConstruct,
+        );
+        scene = addMouseSupport(scene, this.#preparedConstruct) as preparedSceneReturnWithMaterial;
+        scene = addAnalyseSupport(scene, this.#preparedConstruct) as preparedSceneReturnWithMaterial;
+      }
       this.#preparedConstruct?.addConstructedScene(key, scene);
     }
     const groundFloor = this.#preparedConstruct?.getConstructedScene('ground');
