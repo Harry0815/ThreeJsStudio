@@ -1,13 +1,16 @@
 import JEASINGS from 'jeasings';
 import * as THREE from 'three';
+import { preparedConstructReturn, preparedSceneReturn } from './construct';
 
 export interface handleEffectsSupport {
-  tweenChangeMaterial: (
-    material: THREE.MeshPhysicalMaterial | undefined,
-    destMaterial: THREE.MeshPhysicalMaterial | undefined,
-    duration: number,
-  ) => void;
-  tweenPrepareFirstPosition: (models: THREE.Object3D[], duration: number) => void;
+  effectSupportContainer: {
+    tweenChangeMaterial: (
+      material: THREE.MeshPhysicalMaterial | undefined,
+      destMaterial: THREE.MeshPhysicalMaterial | undefined,
+      duration: number,
+    ) => void;
+    tweenPrepareFirstPosition: (models: THREE.Object3D[], duration: number) => void;
+  };
 }
 
 export const hasEffectsSupport = (obj: unknown): obj is handleEffectsSupport => {
@@ -16,7 +19,7 @@ export const hasEffectsSupport = (obj: unknown): obj is handleEffectsSupport => 
   }
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
-  return (obj as object).tweenChangeMaterial !== undefined;
+  return (obj as object).effectSupportContainer !== undefined;
 };
 
 export const effects = (): handleEffectsSupport => {
@@ -54,7 +57,25 @@ export const effects = (): handleEffectsSupport => {
   };
 
   return {
-    tweenChangeMaterial: changeMaterial,
-    tweenPrepareFirstPosition: prepareFirstPosition,
+    effectSupportContainer: {
+      tweenChangeMaterial: changeMaterial,
+      tweenPrepareFirstPosition: prepareFirstPosition,
+    },
+  };
+};
+
+export const addEffectSupport = (
+  scene: preparedSceneReturn,
+  construct: preparedConstructReturn | undefined,
+): preparedSceneReturn => {
+  if (hasEffectsSupport(scene)) {
+    return scene;
+  }
+  if (!construct) {
+    return scene;
+  }
+  return {
+    ...scene,
+    ...effects(),
   };
 };

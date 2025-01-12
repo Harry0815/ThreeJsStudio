@@ -1,12 +1,9 @@
 import JEASINGS from 'jeasings';
 import * as THREE from 'three';
 import { GLTF, OrbitControls } from 'three-stdlib';
-import { analyseReturn } from './analyse';
 import { Camera, cameraTypeEnum } from './camera';
-import { effects, handleEffectsSupport } from './effects';
 import { createLightHelperReturn, createLightReturn, Light, lightTypeEnum } from './light';
 import { glbLoader } from './loader';
-import { handleMouseSupport } from './mouse';
 import { interfaceAnalyseResult, zeroPosition } from './share';
 
 /**
@@ -20,18 +17,10 @@ export interface constructReturn {
 }
 
 /**
- * Interface for handling effects support operations.
- */
-export interface contentSupport {
-  contentGroup: THREE.Group | undefined;
-  handleEffectsSupport: handleEffectsSupport;
-}
-
-/**
  * Interface representing the structure and methods required for constructing and managing a 3D rendering environment.
  */
 export interface preparedConstructReturn {
-  contentSupport: contentSupport;
+  contentGroup: THREE.Group | undefined;
   basicControls: constructReturn;
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls | undefined;
@@ -71,61 +60,13 @@ export interface prepareOrbitControls {
  * Provides methods for rendering and managing a 3D scene in a WebGL context.
  */
 export interface preparedSceneReturn {
-  contentSupport: contentSupport;
+  contentGroup: THREE.Group | undefined;
   animate: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
   updateCameraWindowSize: (newWidth: number, newHeight: number) => void;
   visible: (vis: boolean) => void;
   reCalculateDimensions: (dimension: interfaceAnalyseResult) => void;
   boundingBox: interfaceAnalyseResult | undefined;
 }
-
-/**
- * Interface for handling material support operations.
- *
- * Provides methods to set and manage the material used in rendering processes.
- *
- * Methods:
- * - setMaterial: Sets the material to be used.
- */
-export interface handleMaterialSupport {
-  actualMaterial: THREE.MeshPhysicalMaterial | undefined;
-  setMaterial: (_material: THREE.MeshPhysicalMaterial) => void;
-}
-
-/**
- * Determines if the given object is of type `handleMaterialSupport`.
- *
- * This function performs a check to verify if the provided object
- * includes the `setMaterial` property, which suggests it matches
- * the expected shape for the `handleMaterialSupport` type.
- *
- * @param obj - The object to be checked.
- * @returns A boolean indicating whether the object is of type `handleMaterialSupport`.
- */
-export const ishandleMaterialSupport = (obj: unknown): obj is handleMaterialSupport => {
-  if (obj === undefined) {
-    return false;
-  }
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  return (obj as object).setMaterial !== undefined;
-};
-
-/**
- * The `preparedSceneReturnWithMaterial` type represents a combination of both `preparedSceneReturn`
- * and `handleMaterialSupport`. This type is used to define an object that encapsulates the properties
- * and methods involved in preparing a scene and handling material support in a unified way.
- *
- * It merges the functionalities of the `preparedSceneReturn`, which contains scene-related
- * configurations, and `handleMaterialSupport`, which includes material-specific handling and processing.
- */
-export type preparedSceneReturnWithMaterial = preparedSceneReturn & handleMaterialSupport;
-export type preparedSceneReturnWithMaterialAndAnalysis = preparedSceneReturn & handleMaterialSupport & analyseReturn;
-export type preparedSceneReturnWithMaterialAndAnalysisWithMouseSupport = preparedSceneReturn &
-  handleMaterialSupport &
-  analyseReturn &
-  handleMouseSupport;
-export type preparedConstructWithMouseSupport = preparedConstructReturn & handleMouseSupport;
 
 /**
  * Construct a scene, camera, light, and renderer
@@ -256,7 +197,7 @@ export const prepareConstruct = (
    * @returns {void}
    */
   const addConstructedScene = (key: string, scene: preparedSceneReturn): void => {
-    addToRenderGroup(scene.contentSupport.contentGroup);
+    addToRenderGroup(scene.contentGroup);
     constructedScenes.set(key, scene);
   };
 
@@ -278,7 +219,7 @@ export const prepareConstruct = (
    */
   const deleteConstructedScene = (key: string): void => {
     const scene = constructedScenes.get(key);
-    removeFromRenderGroup(scene?.contentSupport.contentGroup);
+    removeFromRenderGroup(scene?.contentGroup);
     constructedScenes.delete(key);
   };
 
@@ -536,10 +477,7 @@ export const prepareConstruct = (
 
   // Return the prepared construct
   return {
-    contentSupport: {
-      contentGroup: renderGroup,
-      handleEffectsSupport: effects(),
-    },
+    contentGroup: renderGroup,
     basicControls: construct,
     controls,
     renderer,
@@ -620,10 +558,7 @@ const _constructItem = (_renderer: THREE.WebGLRenderer): preparedSceneReturn => 
 
   console.log('constructItem -- ');
   return {
-    contentSupport: {
-      contentGroup: undefined,
-      handleEffectsSupport: effects(),
-    },
+    contentGroup: undefined,
     animate,
     visible,
     updateCameraWindowSize,

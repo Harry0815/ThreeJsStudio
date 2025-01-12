@@ -1,10 +1,6 @@
 import * as THREE from 'three';
-import {
-  handleMaterialSupport,
-  ishandleMaterialSupport,
-  preparedConstructReturn,
-  preparedSceneReturn,
-} from './construct';
+import { preparedConstructReturn, preparedSceneReturn } from './construct';
+import { handleMaterialSupport, hasMaterialSupport } from './material';
 
 /**
  * Represents an interface for handling mouse event support.
@@ -13,12 +9,12 @@ import {
  * such as clicks and movement within a specified container.
  *
  * @interface handleMouseSupport
- * @property {Object} container - Object containing event handling functions for mouse interactions.
+ * @property {Object} mouseSupportContainer - Object containing event handling functions for mouse interactions.
  * @property {Function} container.onClick - Function to handle the `click` event triggered when the mouse is clicked.
  * @property {Function} container.onMouseMove - Function to handle the `mousemove` event triggered when the mouse moves.
  */
 export interface handleMouseSupport {
-  container: {
+  mouseSupportContainer: {
     onClick: (event: MouseEvent, scene: preparedSceneReturn) => void;
     onMouseMove: (event: MouseEvent, scene: preparedSceneReturn) => void;
   };
@@ -37,7 +33,7 @@ export const hasMouseSupport = (obj: unknown): obj is handleMouseSupport => {
   }
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
-  return (obj as object).container !== undefined;
+  return (obj as object).mouseSupportContainer !== undefined;
 };
 
 /**
@@ -60,7 +56,7 @@ export const hasMouseSupport = (obj: unknown): obj is handleMouseSupport => {
 export const mouseSupport = (prep: preparedConstructReturn | undefined): handleMouseSupport => {
   if (!prep) {
     return {
-      container: {
+      mouseSupportContainer: {
         onClick: (_event: MouseEvent): void => {
           //
         },
@@ -149,8 +145,9 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
       }
 
       // Reset color
-      if (ishandleMaterialSupport(scene)) {
-        const resetMaterial = (scene as handleMaterialSupport).actualMaterial;
+      if (hasMaterialSupport(scene)) {
+        const matContainer = (scene as handleMaterialSupport).materialSupportContainer;
+        const resetMaterial = matContainer.actualMaterial;
         if (resetMaterial) {
           prep.basicControls.scene.traverse((object) => {
             if (object instanceof THREE.Mesh) {
@@ -164,7 +161,6 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
             }
           });
         }
-
         if (intersects.length > 0) {
           for (const m of intersects) {
             if ((m.object as unknown) instanceof THREE.Mesh) {
@@ -191,7 +187,7 @@ export const mouseSupport = (prep: preparedConstructReturn | undefined): handleM
   };
 
   return {
-    container: {
+    mouseSupportContainer: {
       onClick: onClick,
       onMouseMove: onMouseMove,
     },

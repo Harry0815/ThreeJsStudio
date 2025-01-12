@@ -1,13 +1,9 @@
 import {
   calculateBoundingBox,
-  effects,
   glbLoader,
-  handleEffectsSupport,
   interfaceAnalyseResult,
   preparedConstructReturn,
   preparedSceneReturn,
-  preparedSceneReturnWithMaterial,
-  traverseGroup,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
@@ -24,7 +20,7 @@ import { GLTF } from 'three-stdlib';
  * (if available), and processes the scene's bounding box for further interaction.
  *
  * @param {string} path - The file path to the GLB file to be loaded and processed.
- * @param {THREE.MeshPhysicalMaterial | undefined} [material=undefined] - An optional custom material
+ * @param {THREE.MeshPhysicalMaterial | undefined} [_material=undefined] - An optional custom material
  *        to override the default materials in the loaded scene.
  * @param {preparedConstructReturn} construct - The prepared construct object containing the renderer,
  * @returns {Promise<preparedSceneReturn>} A promise that resolves to an object with utility functions
@@ -32,14 +28,12 @@ import { GLTF } from 'three-stdlib';
  */
 export const glbScene = async (
   path: string,
-  material: THREE.MeshPhysicalMaterial | undefined = undefined,
+  _material: THREE.MeshPhysicalMaterial | undefined = undefined,
   construct: preparedConstructReturn | undefined = undefined,
-): Promise<preparedSceneReturnWithMaterial> => {
+): Promise<preparedSceneReturn> => {
   const glbContainer: THREE.Group = new THREE.Group();
   const name = path;
   let analyseBoundingBoxResult: interfaceAnalyseResult | undefined = undefined;
-  let actualMaterial: THREE.MeshPhysicalMaterial | undefined = undefined;
-  const effectsHandler: handleEffectsSupport = effects();
 
   /**
    * Asynchronously loads a GLB (Binary glTF) file and adds it to a designated container.
@@ -96,33 +90,10 @@ export const glbScene = async (
   const visible = (vis: boolean): void => {
     glbContainer.visible = vis;
     if (!vis) {
-      if (construct?.contentSupport.contentGroup) construct.contentSupport.contentGroup.remove(glbContainer);
+      if (construct?.contentGroup) construct.contentGroup.remove(glbContainer);
     } else {
-      if (construct?.contentSupport.contentGroup) construct.contentSupport.contentGroup.add(glbContainer);
+      if (construct?.contentGroup) construct.contentGroup.add(glbContainer);
     }
-  };
-
-  /**
-   * Sets the material for an object.
-   *
-   * @param {THREE.Material} material - The material to apply.
-   * @returns {void}
-   */
-  const setMaterial = (material: THREE.MeshPhysicalMaterial): void => {
-    if (!actualMaterial) {
-      actualMaterial = material.clone();
-      traverseGroup(glbContainer, (child) => {
-        if ((child as unknown) instanceof THREE.Mesh) {
-          const m = child as THREE.Mesh;
-          if (actualMaterial) {
-            m.material = actualMaterial;
-          }
-        }
-      });
-      return;
-    }
-
-    effectsHandler.tweenChangeMaterial(actualMaterial, material, 1000);
   };
 
   /**
@@ -156,25 +127,16 @@ export const glbScene = async (
   };
 
   await glb();
-  if (material) {
-    setMaterial(material);
-  }
   analyseScene();
 
-  const data = {
-    contentSupport: {
-      contentGroup: glbContainer,
-      handleEffectsSupport: effectsHandler,
-    },
+  console.log('glbContainer-Scene -- ', glbContainer);
+
+  return {
+    contentGroup: glbContainer,
     animate,
     visible,
     updateCameraWindowSize,
     reCalculateDimensions,
-    setMaterial,
-    actualMaterial,
     boundingBox: analyseBoundingBoxResult,
-  } as preparedSceneReturnWithMaterial;
-
-  console.log('glbContainer-Scene -- ', glbContainer);
-  return data;
+  };
 };

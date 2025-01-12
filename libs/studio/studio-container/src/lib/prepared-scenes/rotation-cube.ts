@@ -1,7 +1,6 @@
 import {
   blue,
   createTextLabel,
-  effects,
   glbLoader,
   green,
   interfaceAnalyseResult,
@@ -179,10 +178,7 @@ export const constructRotationCube = (): preparedSceneReturn => {
 
   console.log('cube-Scene -- ', groupCube, cubeScene);
   return {
-    contentSupport: {
-      contentGroup: groupCube,
-      handleEffectsSupport: effects(),
-    },
+    contentGroup: groupCube,
     animate,
     visible,
     updateCameraWindowSize,

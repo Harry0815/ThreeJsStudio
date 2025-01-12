@@ -1,4 +1,4 @@
-import { effects, interfaceAnalyseResult, preparedSceneReturn } from '@three-js-studio/three-utils';
+import { interfaceAnalyseResult, preparedSceneReturn } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 
 /**
@@ -129,10 +129,7 @@ export const ground = (_scene: THREE.Scene): preparedSceneReturn => {
   console.log('ground-Scene -- ');
 
   return {
-    contentSupport: {
-      contentGroup: contentGroup,
-      handleEffectsSupport: effects(),
-    },
+    contentGroup: contentGroup,
     animate,
     visible,
     updateCameraWindowSize,

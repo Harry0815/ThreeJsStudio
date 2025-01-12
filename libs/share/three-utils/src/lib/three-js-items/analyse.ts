@@ -78,10 +78,10 @@ export const addAnalyseSupport = (
   if (hasAnalyseSupport(scene)) {
     return scene;
   }
-  if (construct && scene.contentSupport.contentGroup) {
+  if (construct && scene.contentGroup) {
     return {
       ...scene,
-      ...analyse(scene.contentSupport.contentGroup),
+      ...analyse(scene.contentGroup),
     };
   }
   return scene;

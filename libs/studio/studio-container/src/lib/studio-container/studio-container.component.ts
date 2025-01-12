@@ -2,17 +2,17 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import {
   addAnalyseSupport,
+  addMaterialSupport,
   addMouseSupport,
   construct,
   handleMouseSupport,
+  hasMaterialSupport,
   hasMouseSupport,
-  ishandleMaterialSupport,
   Light,
   lightTypeEnum,
   prepareConstruct,
   preparedConstructReturn,
   preparedSceneReturn,
-  preparedSceneReturnWithMaterial,
 } from '@three-js-studio/three-utils';
 import * as THREE from 'three';
 import { glbScene } from '../prepared-scenes/glb-scene';
@@ -83,11 +83,11 @@ export class StudioContainerComponent implements OnInit {
   onClick(_event: MouseEvent): void {
     let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
     if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onClick(_event, scene);
+      (scene as handleMouseSupport).mouseSupportContainer.onClick(_event, scene);
     }
     scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
     if (hasMouseSupport(scene)) {
-      (scene as handleMouseSupport).container.onClick(_event, scene);
+      (scene as handleMouseSupport).mouseSupportContainer.onClick(_event, scene);
     }
   }
 
@@ -101,13 +101,13 @@ export class StudioContainerComponent implements OnInit {
   @HostListener('mousemove', ['$event'])
   onMouseMove(_event: MouseEvent): void {
     let scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
-    if (ishandleMaterialSupport(scene)) {
+    if (hasMaterialSupport(scene)) {
       if (hasMouseSupport(scene)) {
-        (scene as handleMouseSupport).container.onMouseMove(_event, scene);
+        (scene as handleMouseSupport).mouseSupportContainer.onMouseMove(_event, scene);
       }
       scene = this.#preparedConstruct?.getConstructedScene('rotationCube');
       if (hasMouseSupport(scene)) {
-        (scene as handleMouseSupport).container.onMouseMove(_event, scene);
+        (scene as handleMouseSupport).mouseSupportContainer.onMouseMove(_event, scene);
       }
     }
   }
@@ -224,7 +224,7 @@ export class StudioContainerComponent implements OnInit {
   clickChangeColor(): void {
     console.log('clickChangeColor', this.#actualConstructedScene);
     const scene = this.#preparedConstruct?.getConstructedScene(this.#actualConstructedScene);
-    if (ishandleMaterialSupport(scene)) {
+    if (hasMaterialSupport(scene)) {
       const mesh = new THREE.MeshPhysicalMaterial({
         color: 0xaf2010,
         roughness: 100,
@@ -232,7 +232,7 @@ export class StudioContainerComponent implements OnInit {
         clearcoatRoughness: 0.5,
         metalness: 0.9,
       });
-      scene.setMaterial(mesh);
+      scene.materialSupportContainer.changeMaterial(mesh);
     }
   }
 
@@ -283,19 +283,23 @@ export class StudioContainerComponent implements OnInit {
       if (key.includes('lotus')) {
         scene = await glbScene(key, undefined, this.#preparedConstruct);
       } else {
-        scene = await glbScene(
-          key,
-          new THREE.MeshPhysicalMaterial({
-            color: 0xafcb10,
-            roughness: 0.3,
-            clearcoat: 1,
-            clearcoatRoughness: 1,
-            metalness: 0.7,
-          }),
-          this.#preparedConstruct,
-        );
-        scene = addMouseSupport(scene, this.#preparedConstruct) as preparedSceneReturnWithMaterial;
-        scene = addAnalyseSupport(scene, this.#preparedConstruct) as preparedSceneReturnWithMaterial;
+        scene = await glbScene(key, undefined, this.#preparedConstruct);
+        scene = addMouseSupport(scene, this.#preparedConstruct);
+        scene = addMaterialSupport(scene, this.#preparedConstruct);
+        if (hasMaterialSupport(scene)) {
+          scene.materialSupportContainer.setMaterial(
+            new THREE.MeshPhysicalMaterial({
+              color: 0xafcb10,
+              roughness: 0.3,
+              clearcoat: 1,
+              clearcoatRoughness: 1,
+              metalness: 0.7,
+            }),
+          );
+          // scene.materialSupportContainer.actualMaterial = actualMaterial;
+          // console.log('scene', scene, actualMaterial);
+        }
+        scene = addAnalyseSupport(scene, this.#preparedConstruct);
       }
       this.#preparedConstruct?.addConstructedScene(key, scene);
     }
@@ -312,13 +316,11 @@ export class StudioContainerComponent implements OnInit {
     scene.visible(true);
     rotationCube?.visible(true);
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    if (this.#preparedConstruct.contentSupport.contentGroup && rotationCube?.contentSupport.contentGroup) {
-      this.#preparedConstruct?.contentSupport.handleEffectsSupport.tweenPrepareFirstPosition(
-        [this.#preparedConstruct.contentSupport.contentGroup, rotationCube.contentSupport.contentGroup],
-        1000,
-      );
-    }
+    // if (this.#preparedConstruct.contentSupport.contentGroup && rotationCube?.contentSupport.contentGroup) {
+    //   this.#preparedConstruct?.contentSupport.handleEffectsSupport.effectSupportContainer.tweenPrepareFirstPosition(
+    //     [this.#preparedConstruct.contentSupport.contentGroup, rotationCube.contentSupport.contentGroup],
+    //     1000,
+    //   );
+    // }
   }
 }

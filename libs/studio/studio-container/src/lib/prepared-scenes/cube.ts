@@ -1,6 +1,5 @@
 import {
   calculateBoundingBox,
-  effects,
   glbLoader,
   interfaceAnalyseResult,
   preparedSceneReturn,
@@ -111,10 +110,7 @@ export const cube = async (): Promise<preparedSceneReturn> => {
   console.log('cube-Scene -- ', cube);
 
   return {
-    contentSupport: {
-      contentGroup: cube,
-      handleEffectsSupport: effects(),
-    },
+    contentGroup: cube,
     animate,
     visible,
     updateCameraWindowSize,

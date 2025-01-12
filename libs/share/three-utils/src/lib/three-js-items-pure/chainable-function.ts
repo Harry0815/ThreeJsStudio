@@ -1,4 +1,4 @@
-import { mouseSupport } from '@three-js-studio/three-utils';
+import { mouseSupport } from './../three-js-items';
 
 type InternalData = Record<string, unknown>;
 
