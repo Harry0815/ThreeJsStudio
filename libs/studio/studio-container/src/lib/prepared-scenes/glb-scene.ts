@@ -28,7 +28,6 @@ import { GLTF } from 'three-stdlib';
  */
 export const glbScene = async (
   path: string,
-  _material: THREE.MeshPhysicalMaterial | undefined = undefined,
   construct: preparedConstructReturn | undefined = undefined,
 ): Promise<preparedSceneReturn> => {
   const glbContainer: THREE.Group = new THREE.Group();

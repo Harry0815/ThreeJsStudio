@@ -2,10 +2,12 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, viewChild } from '@angular/core';
 import {
   addAnalyseSupport,
+  addEffectSupport,
   addMaterialSupport,
   addMouseSupport,
   construct,
   handleMouseSupport,
+  hasEffectsSupport,
   hasMaterialSupport,
   hasMouseSupport,
   Light,
@@ -281,9 +283,9 @@ export class StudioContainerComponent implements OnInit {
     let scene: preparedSceneReturn | undefined = this.#preparedConstruct?.getConstructedScene(key);
     if (!scene) {
       if (key.includes('lotus')) {
-        scene = await glbScene(key, undefined, this.#preparedConstruct);
+        scene = await glbScene(key, this.#preparedConstruct);
       } else {
-        scene = await glbScene(key, undefined, this.#preparedConstruct);
+        scene = await glbScene(key, this.#preparedConstruct);
         scene = addMouseSupport(scene, this.#preparedConstruct);
         scene = addMaterialSupport(scene, this.#preparedConstruct);
         if (hasMaterialSupport(scene)) {
@@ -296,11 +298,10 @@ export class StudioContainerComponent implements OnInit {
               metalness: 0.7,
             }),
           );
-          // scene.materialSupportContainer.actualMaterial = actualMaterial;
-          // console.log('scene', scene, actualMaterial);
         }
         scene = addAnalyseSupport(scene, this.#preparedConstruct);
       }
+      scene = addEffectSupport(scene, this.#preparedConstruct);
       this.#preparedConstruct?.addConstructedScene(key, scene);
     }
     const groundFloor = this.#preparedConstruct?.getConstructedScene('ground');
@@ -316,11 +317,11 @@ export class StudioContainerComponent implements OnInit {
     scene.visible(true);
     rotationCube?.visible(true);
 
-    // if (this.#preparedConstruct.contentSupport.contentGroup && rotationCube?.contentSupport.contentGroup) {
-    //   this.#preparedConstruct?.contentSupport.handleEffectsSupport.effectSupportContainer.tweenPrepareFirstPosition(
-    //     [this.#preparedConstruct.contentSupport.contentGroup, rotationCube.contentSupport.contentGroup],
-    //     1000,
-    //   );
-    // }
+    if (hasEffectsSupport(scene) && scene.contentGroup && rotationCube?.contentGroup && groundFloor?.contentGroup) {
+      scene.effectSupportContainer.tweenPrepareFirstPosition(
+        [scene.contentGroup, rotationCube.contentGroup, groundFloor.contentGroup],
+        1000,
+      );
+    }
   }
 }
