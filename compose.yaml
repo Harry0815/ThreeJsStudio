@@ -20,13 +20,13 @@ services:
   postgres:
     image: postgres:16.6-alpine
     ports:
-      - ${PGPORT:-5432}:${PGPORT:-5432}
+      - ${PGPORT:-5432}:${PGPORT:-5400}
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-hss}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_HOST: ${POSTGRES_HOST:-localhost}
-      PGPORT: ${PGPORT:-5432}
+      PGPORT: ${PGPORT:-5400}
     volumes:
       - hss_postgres_data:/var/lib/postgresql/data
   caddy:

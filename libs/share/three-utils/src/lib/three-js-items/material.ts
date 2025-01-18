@@ -53,16 +53,16 @@ export const materialSupport = (scene: preparedSceneReturn): handleMaterialSuppo
       setMaterial(material: THREE.MeshPhysicalMaterial): void {
         if (!this.actualMaterial) {
           this.actualMaterial = material.clone();
-          if (scene.contentGroup) {
-            traverseGroup(scene.contentGroup, (child) => {
-              if ((child as unknown) instanceof THREE.Mesh) {
-                const m = child as THREE.Mesh;
-                if (this.actualMaterial) {
-                  m.material = this.actualMaterial;
-                }
+        }
+        if (scene.contentGroup) {
+          traverseGroup(scene.contentGroup, (child) => {
+            if ((child as unknown) instanceof THREE.Mesh) {
+              const m = child as THREE.Mesh;
+              if (this.actualMaterial) {
+                m.material = this.actualMaterial;
               }
-            });
-          }
+            }
+          });
         }
       },
       /**
@@ -73,6 +73,7 @@ export const materialSupport = (scene: preparedSceneReturn): handleMaterialSuppo
        */
       changeMaterial(material: THREE.MeshPhysicalMaterial): void {
         console.log('changeMaterial', material);
+        this.setMaterial(material);
       },
     },
   };
