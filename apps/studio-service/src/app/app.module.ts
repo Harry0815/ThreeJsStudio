@@ -2,6 +2,7 @@ import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { tusTestService } from './tus-test.service';
 
 /**
  * Represents the root module of the application in a NestJS framework.
@@ -17,7 +18,7 @@ import { AppService } from './app.service';
 @Module({
   imports: [],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, tusTestService],
 })
 export class AppModule implements NestModule {
   /**
